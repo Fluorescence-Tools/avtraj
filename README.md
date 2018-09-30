@@ -1,4 +1,5 @@
-#AvTraj
+AvTraj
+======
 
 AvTraj is tool to calculate FRET observables from MD-trajectories. Read, write and analyze accessible volumes (AVs) 
 using MD trajectories as an input with only a few lines of Python code. By the use of LabelLib AvTraj provides
@@ -17,7 +18,8 @@ Features include:
 AVTraj includes a command-line application, avana, for screening and analyzing structural models.
 
 
-## Relation of other software and libraries
+Relation of other software and libraries
+----------------------------------------
 
 LabelLib serves as core low-level library for the software Olga and the higher-level Python library AvTraj. The
 deprecated software FPS is independent of LabelLib.
@@ -35,9 +37,11 @@ MD-simulations and the development of Python scripts handling FRET-based structu
 models by rigid-body docking using experimental FRET data.
 
 
-## Installation
+Installation
+============
 
-# Anaconda
+Anaconda
+--------
 
 ```commandline
 conda --add channels tpeulen
@@ -45,7 +49,8 @@ conda install avtraj
 ```
 
 
-##  Code Example
+Code Example
+============
 
 ```python
 import mdtraj as md
@@ -74,20 +79,16 @@ av_dist = avt.AvDistanceTrajectory(traj, './examples/hGBP1_distance.json')
 
 ```
 
-## Dependencies
-The windows dll requires the following redistributables (not included)
 
-MS-visual studio 2005
-	vcredist_x64
-	vcredist_x86
+Citations 
+=========
 
-
-##  Citations 
 * MDTraj - [![DOI for Citing MDTraj](https://img.shields.io/badge/DOI-10.1016%2Fj.bpj.2015.08.015-blue.svg)](http://doi.org/10.1016/j.bpj.2015.08.015)
 * FPS - [![DOI for Citing FPS](https://img.shields.io/badge/DOI-10.1038/nmeth.2222-blue.svg)](http://doi.org/10.1038/nmeth.2222)
 
 
-## License
+License
+=======
 
 GNU LGPL version 2.1, or at your option a later version of the license.
 Various sub-portions of this library may be independently distributed under
