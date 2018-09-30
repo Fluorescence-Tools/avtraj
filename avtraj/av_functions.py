@@ -1,20 +1,147 @@
-import ctypes as C
-import platform
 import os
 import json
 import numpy as np
-import LabelLib as ll
 import numba as nb
 from math import sqrt
+import sobol_lib
 
-DISTANCE_SAMPLES = 5000
+DISTANCE_SAMPLES = 200000
+DISTANCE_SAMPLING_METHOD = "sobol_sequence"
 
-b, o = platform.architecture()
 package_directory = os.path.dirname(os.path.abspath(__file__))
-path = os.path.join(package_directory, './dll')
 _periodic_table = json.load(open(os.path.join(package_directory, 'elements.json')))['Periodic Table']
-VDW_DICT = dict((key, _periodic_table[key]["vdW radius"])
-                for key in _periodic_table.keys())
+VDW_DICT = dict((key, _periodic_table[key]["vdW radius"]) for key in _periodic_table.keys())
+
+PDB_KEYS = [
+    'i', 'chain', 'res_id', 'res_name',
+    'atom_id', 'atom_name', 'element',
+    'coord',
+    'charge', 'radius', 'bfactor', 'mass'
+]
+
+PDB_FORMATS = [
+    'i4', '|S1', 'i4', '|S5',
+    'i4', '|S5', '|S1',
+    '3f8',
+    'f8', 'f8', 'f8', 'f8'
+]
+
+sobol_sequence = []#sobol_lib.i4_sobol_generate(6, DISTANCE_SAMPLES)
+
+
+def write(filename, atoms=None, append_model=False, append_coordinates=False, **kwargs):
+    """ Writes a structured numpy array containing the PDB-info to a PDB-file
+
+    If append_model and append_coordinates are False the file is overwritten. Otherwise the atomic-coordinates
+    are appended to the existing file.
+
+
+    :param filename: target-filename
+    :param atoms: structured numpy array
+    :param append_model: bool
+        If True the atoms are appended as a new model
+    :param append_coordinates:
+        If True the coordinates are appended to the file
+
+    """
+    mode = 'a+' if append_model or append_coordinates else 'w+'
+    fp = open(filename, mode)
+
+    al = ["%-6s%5d %4s%1s%3s %1s%4d%1s   %8.3f%8.3f%8.3f%6.2f%6.2f          %2s%2s\n" %
+          ("ATOM ", at['atom_id'], at['atom_name'], " ", at['res_name'], at['chain'], at['res_id'], " ",
+           at['coord'][0], at['coord'][1], at['coord'][2], 0.0, at['bfactor'], at['element'], "  ")
+          for at in atoms
+    ]
+    if append_model:
+        fp.write('MODEL')
+    fp.write("".join(al))
+    if append_model:
+        fp.write('ENDMDL')
+    fp.close()
+
+
+def write_xyz(filename, points, verbose=False):
+    """
+    Writes the points as xyz-format file. The xyz-format file can be opened and displayed for instance
+    in PyMol
+
+    :param filename: string
+    :param points: array
+    :param verbose: bool
+
+    """
+    if verbose:
+        print("write_xyz\n")
+        print("Filename: %s\n" % filename)
+    fp = open(filename, 'w')
+    npoints = len(points)
+    fp.write('%i\n' % npoints)
+    fp.write('Name\n')
+    for p in points:
+        fp.write('D %.3f %.3f %.3f\n' % (p[0], p[1], p[2]))
+    fp.close()
+
+
+def write_points(filename, points, verbose=False, mode='xyz', density=None):
+    if mode == 'pdb':
+        atoms = np.empty(len(points), dtype={'names': PDB_KEYS, 'formats': PDB_FORMATS})
+        atoms['coord'] = points
+        if density is not None:
+            atoms['bfactor'] = density
+        write(filename, atoms, verbose=verbose)
+    else:
+        write_xyz(filename, points, verbose=verbose)
+
+
+def open_dx(density, ro, rn, dr):
+    """ Returns a open_dx string compatible with PyMOL
+
+    :param density: 3d-grid with values (densities)
+    :param ro: origin (x, y, z)
+    :param rn: number of grid-points in x, y, z
+    :param dr: grid-size (dx, dy, dz)
+    :return: string
+    """
+    xo, yo, zo = ro
+    xn, yn, zn = rn
+    dx, dy, dz = dr
+    s = ""
+    s += "object 1 class gridpositions counts %i %i %i\n" % (xn, yn, zn)
+    s += "origin " + str(xo) + " " + str(yo) + " " + str(zo) + "\n"
+    s += "delta %s 0 0\n" % dx
+    s += "delta 0 %s 0\n" % dy
+    s += "delta 0 0 %s\n" % dz
+    s += "object 2 class gridconnections counts %i %i %i\n" % (xn, yn, zn)
+    s += "object 3 class array type double rank 0 items " + str(xn*yn*zn) + " data follows\n"
+    n = 0
+    for i in range(0, xn):
+        for j in range(0, yn):
+            for k in range(0, zn):
+                s += str(density[i, j, k])
+                n += 1
+                if n % 3 == 0:
+                    s += "\n"
+                else:
+                    s += " "
+    s += "\nobject \"density (all) [A^-3]\" class field\n"
+
+    return s
+
+
+def write_open_dx(filename, density, r0, nx, ny, nz, dx, dy, dz):
+    """Writes a density into a dx-file
+
+    :param filename: output filename
+    :param density: 3d-grid with values (densities)
+    :param ro: origin (x, y, z)
+    :param rx, ry, rz: number of grid-points in x, y, z
+    :param dx, dy, dz: grid-size (dx, dy, dz)
+
+    :return:
+    """
+    with open(filename + '.dx', 'w') as fp:
+        s = open_dx(density, r0, (nx, ny, nz), (dx, dy, dz))
+        fp.write(s)
 
 
 def get_vdw(trajectory):
@@ -26,57 +153,79 @@ def get_vdw(trajectory):
                     dtype=np.float64)
 
 
-def histogram_rda(av1=None, av2=None, **kwargs):
+def histogram_rda(points_1, points_2, **kwargs):
     """Calculates the distance distribution with respect to a second accessible volume and returns the
     distance axis and the probability of the respective distance. By default the distance-axis "mfm.rda_axis"
     is taken to generate the histogram.
 
-    :param av1: Accessible volume
-    :param av2: Accessible volume
-    :param kwargs:
-    :return:
+    Parameters
+    ----------
+    points_1 : array
+        An array of points containing the cartesian coordinates of the points and the weight of each
+        point [x, y, z, weight].
+
+    points_2 : array
+        An array of points containing the cartesian coordinates of the points and the weight of each
+        point [x, y, z, weight].
 
     Examples
     --------
-
     >>> structure = mfm.structure.Structure('./sample_data/modelling/pdb_files/hGBP1_closed.pdb')
     >>> av1 = mfm.fluorescence.fps.BasicAV(structure, residue_seq_number=18, atom_name='CB')
     >>> av2 = mfm.fluorescence.fps.BasicAV(structure, residue_seq_number=577, atom_name='CB')
     >>> y, x = av1.pRDA(av2)
 
+    Returns
+    -------
+    tuple
+        A tuple (p, rda_axis) where the first and the second element correspond to the
+        weights and the histogram bins.
+
     """
     rda_axis = kwargs.get('rda_axis', None)
     if rda_axis is None:
         rda_axis = np.linspace(5, 150, 100)
-    same_size = kwargs.get('same_size', True)
-    n_samples = kwargs.get('distance_samples', DISTANCE_SAMPLES)
-    if av1 is None or av2 is None:
-        ds = kwargs.get('distances', None)
-    else:
-        ds = random_distances(av1.points, av2.points, n_samples)
+    ds = random_distances(points_1, points_2, **kwargs)
     r = ds[:, 0]
     w = ds[:, 1]
     p = np.histogram(r, bins=rda_axis, weights=w)[0]
-    if same_size:
-        p = np.append(p, [0])
+    p = np.append(p, [0])
     return p, rda_axis
 
 
-def RDAMean(av1=None, av2=None, **kwargs):
-    """Calculate the mean distance between two accessible volumes
+def average_distance(points_1, points_2, **kwargs):
+    """Calculate the mean distance between two array of points
 
-    >>> pdb_filename = '/examples/T4L_Topology.pdb'
-    >>> structure = mfm.structure.Structure(pdb_filename)
-    >>> av1 = mfm.fluorescence.fps.AV(structure, residue_seq_number=72, atom_name='CB')
-    >>> av2 = mfm.fluorescence.fps.AV(structure, residue_seq_number=134, atom_name='CB')
-    >>> mfm.fluorescence.fps.functions.RDAMean(av1, av2)
-    52.93390285282142
+    Parameters
+    ----------
+    points_1 : array
+        An array of points containing the cartesian coordinates of the points and the weight of each
+        point [x, y, z, weight].
+
+    points_2 : array
+        An array of points containing the cartesian coordinates of the points and the weight of each
+        point [x, y, z, weight].
+
+    distance_samples : int
+        The number of randomly picked distances for the calculation of the average distance between
+        the two arrays of points
+
+    use_weights : bool
+        If use_weights is True the weights of the points are considered in the caclualtion of the
+        average distance between the points.
+
+
+    Returns
+    -------
+    float
+        The distance between the two set of points
+
     """
-    n_samples = kwargs.get('distance_samples', DISTANCE_SAMPLES)
-    d = kwargs.get('distances', None)
-    if d is None:
-        d = random_distances(av1.points, av2.points, n_samples)
-    return np.dot(d[:, 0], d[:, 1]) / d[:, 1].sum()
+    d = random_distances(points_1, points_2, **kwargs)
+    if kwargs.get('use_weights', True):
+        return np.dot(d[:, 0], d[:, 1]) / d[:, 1].sum()
+    else:
+        return np.mean(d[:, 0])
 
 
 def widthRDA(av1, av2, **kwargs):
@@ -97,9 +246,28 @@ def widthRDA(av1, av2, **kwargs):
     return np.sqrt(v)
 
 
-def RDAMeanE(av1=None, av2=None, forster_radius=52.0, **kwargs):
+def mean_fret_efficiency(points_1, points_2, forster_radius=52.0, **kwargs):
     """Calculate the FRET-averaged (PDA/Intensity) distance between two accessible volumes
 
+    Parameters
+    ----------
+
+    points_1 : array
+        An array of points containing the cartesian coordinates of the points and the weight of each
+        point [x, y, z, weight].
+
+    points_2 : array
+        An array of points containing the cartesian coordinates of the points and the weight of each
+        point [x, y, z, weight].
+
+
+    Returns
+    -------
+    float
+        The mean FRET efficiency for the two sets of points
+
+    Examples
+    --------
     >>> pdb_filename = '/examples/T4L_Topology.pdb'
     >>> structure = mfm.Structure(pdb_filename)
     >>> av1 = mfm.fps.AV(structure, residue_seq_number=72, atom_name='CB')
@@ -107,15 +275,12 @@ def RDAMeanE(av1=None, av2=None, forster_radius=52.0, **kwargs):
     >>> mfm.fps.RDAMeanE(av1, av2)
     52.602731299544686
     """
-    n_samples = kwargs.get('distance_samples', DISTANCE_SAMPLES)
-    d = kwargs.get('distances', None)
-    if d is None:
-        d = random_distances(av1.points, av2.points, n_samples)
+    d = random_distances(points_1, points_2, **kwargs)
     r = d[:, 0]
     w = d[:, 1]
     e = (1./(1.+(r/forster_radius)**6.0))
     mean_fret = np.dot(w, e) / w.sum()
-    return (1./mean_fret - 1.)**(1./6.) * forster_radius
+    return mean_fret
 
 
 def dRmp(av1, av2):
@@ -133,28 +298,104 @@ def dRmp(av1, av2):
 
 
 @nb.jit
-def random_distances(p1, p2, n_samples):
-    """
+def random_distances(p1, p2, grid1=None, grid2=None,
+                     dg_1=1.0, dg_2=1.0, grid_origin_1=None,
+                     grid_origin_2=None, distance_samples=None,
+                     distance_sampling_method=None):
+    """Calculates random cartesian distances between two set of points where every
+    point has a weight
 
-    :param xyzw: a 4-dim vector xyz and the weight of the coordinate
-    :param nSamples:
-    :return:
+    Parameters
+    ----------
+
+    p1 : array
+        Numpy array of cartesian coordinates xyz with weights. The array [[1,2,3,0.3], [4,5,6,0.7]]
+        corresponds to two points with the coordinates [1,2,3] and [4,5,6] and weights of 0.3 and
+        0.7, respectively.
+
+    p2 : array
+        Numpy array of cartesian coordinates xyz and weights (see description of p1).
+
+    n_samples : int
+        Number of random distances to be calculated
+
+    Returns
+    -------
+    array
+        Two dimensional array of distances with respective weight of the distance. The weights
+        are calculated by the product of the weights of the individual points corresponding to
+        the distance. The weights are normalized to unity (the sum of all weights is one).
+
     """
 
     n_p1 = p1.shape[0]
     n_p2 = p2.shape[0]
 
-    distances = np.empty((n_samples, 2), dtype=np.float64)
+    if distance_samples is None:
+        distance_samples = DISTANCE_SAMPLES
+    if distance_sampling_method is None:
+        distance_sampling_method = DISTANCE_SAMPLING_METHOD
 
-    for i in range(n_samples):
-        i1 = np.random.randint(0, n_p1)
-        i2 = np.random.randint(0, n_p2)
-        distances[i, 0] = sqrt(
-            (p1[i1, 0] - p2[i2, 0]) ** 2.0 +
-            (p1[i1, 1] - p2[i2, 1]) ** 2.0 +
-            (p1[i1, 2] - p2[i2, 2]) ** 2.0
-        )
-        distances[i, 1] = p1[i1, 3] * p2[i2, 3]
+    distances = np.empty((distance_samples, 2), dtype=np.float64)
+
+    if distance_sampling_method == "sobol_sequence":
+        n_distances = 0
+
+        ng1 = grid1.shape[0]
+        ng2 = grid2.shape[0]
+
+        x0_1 = grid_origin_1[0]
+        y0_1 = grid_origin_1[1]
+        z0_1 = grid_origin_1[2]
+
+        x0_2 = grid_origin_2[0]
+        y0_2 = grid_origin_2[1]
+        z0_2 = grid_origin_2[2]
+
+        min_i = min(len(sobol_sequence), distance_samples)
+
+        for i in range(min_i - 1):
+            s = sobol_sequence[i]
+            gp1_x = int(s[0] * ng1)
+            gp1_y = int(s[1] * ng1)
+            gp1_z = int(s[2] * ng1)
+
+            gp2_x = int(s[3] * ng2)
+            gp2_y = int(s[4] * ng2)
+            gp2_z = int(s[5] * ng2)
+            i += 1
+
+            v1 = grid1[gp1_x, gp1_y, gp1_z]
+            v2 = grid2[gp2_x, gp2_y, gp2_z]
+            if v1 > 0 and v2 > 0:
+
+                p1x = gp1_x * dg_1 + x0_1
+                p1y = gp1_y * dg_1 + y0_1
+                p1z = gp1_z * dg_1 + z0_1
+
+                p2x = gp2_x * dg_2 + x0_2
+                p2y = gp2_y * dg_2 + y0_2
+                p2z = gp2_z * dg_2 + z0_2
+
+                distances[n_distances, 0] = sqrt(
+                    (p1x - p2x) ** 2.0 +
+                    (p1y - p2y) ** 2.0 +
+                    (p1z - p2z) ** 2.0
+                )
+                distances[n_distances, 1] = v1 * v2
+                n_distances += 1
+        distances = distances[:n_distances]
+    else:
+        for i in range(distance_samples):
+            i1 = np.random.randint(0, n_p1)
+            i2 = np.random.randint(0, n_p2)
+            distances[i, 0] = sqrt(
+                (p1[i1, 0] - p2[i2, 0]) ** 2.0 +
+                (p1[i1, 1] - p2[i2, 1]) ** 2.0 +
+                (p1[i1, 2] - p2[i2, 2]) ** 2.0
+            )
+            distances[i, 1] = p1[i1, 3] * p2[i2, 3]
+
     distances[:, 1] /= distances[:, 1].sum()
 
     return distances
@@ -164,7 +405,7 @@ def random_distances(p1, p2, n_samples):
 def density2points(dg, density_3d, grid_origin):
     nx, ny, nz = density_3d.shape
     n_max = nx * ny * nz
-    points = np.empty((n_max, 3), dtype=np.float64, order='C')
+    points = np.empty((n_max, 4), dtype=np.float64, order='C')
 
     gdx = np.arange(0, nx, dtype=np.float64) * dg
     gdy = np.arange(0, ny, dtype=np.float64) * dg
@@ -183,61 +424,8 @@ def density2points(dg, density_3d, grid_origin):
                     points[n, 0] = gdx[ix] + x0
                     points[n, 1] = gdy[iy] + y0
                     points[n, 2] = gdz[iz] + z0
+                    points[n, 3] = d
                     n += 1
     return points[:n]
 
-
-def calculate_1_radius(x, y, z, vdw, l, w, r1, atom_i, dg=0.5, **kwargs):
-    """
-    :param l: float
-        linker length
-    :param w: float
-        linker width
-    :param r: float
-        dye-radius
-    :param atom_i: int
-        attachment-atom index
-    :param x: array
-        Cartesian coordinates of atoms (x) in angstrom
-    :param y: array
-        Cartesian coordinates of atoms (y) in angstrom
-    :param z: array
-        Cartesian coordinates of atoms (z) in angstrom
-    :param vdw:
-        Van der Waals radii (same length as number of atoms)
-    :param linkersphere: float
-        Initial linker-sphere to start search of allowed dye positions
-    :param linknodes: int
-        By default 3
-    :param vdwRMax: float
-        Maximal Van der Waals radius
-    :param dg: float
-        Resolution of accessible volume in Angstrom
-    :param verbose: bool
-        If true informative output is printed on std-out
-
-
-    """
-    x0, y0, z0 = x[atom_i], y[atom_i], z[atom_i]
-    r0 = np.array([x0, y0, z0], dtype=np.float64)
-    vdw = vdw.astype(np.float64, order='C')
-
-    atoms = np.array([x, y, z, vdw])
-    dye_attachment_point = r0
-    linker_length = l
-    linker_width = w
-    dye_radius = r1
-    simulation_grid_spacing = dg
-    av1 = ll.dyeDensityAV1(atoms,
-                           dye_attachment_point,
-                           linker_length,
-                           linker_width,
-                           dye_radius,
-                           simulation_grid_spacing)
-    density_3d = np.array(av1.grid).reshape(av1.shape, order='F')
-    grid_origin = av1.originXYZ
-    dg = av1.discStep
-
-    points = density2points(dg, density_3d, grid_origin)
-    return points, density_3d, r0
 
