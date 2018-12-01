@@ -1,7 +1,8 @@
+
 Tutorial
 --------
 
-Define all parameters necessary for the calculation of an accessible volume (AV) (see: :ref:`av_parameters_label`)
+Define all parameters necessary for the calculation of an accessible volume (AV)
 
 .. literalinclude:: ./examples/labeling.fps.json
   :language: JSON
@@ -10,6 +11,3 @@ Define all parameters necessary for the calculation of an accessible volume (AV)
 .. literalinclude:: ./examples/example.py
   :language: python
 
-
-.. image:: gnu.png
-   (options)

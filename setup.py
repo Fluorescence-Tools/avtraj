@@ -13,7 +13,7 @@ requirements = [
 
 setup(
     name="avtraj",
-    version="0.0.8",
+    version="0.0.9",
     author="Thomas-Otavio Peulen",
     url="https://github.com/Fluorescence-Tools/avtraj",
     author_email="thomas.otavio.peulen@gmail.com",

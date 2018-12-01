@@ -752,8 +752,10 @@ class AVTrajectory(PythonBase):
 
     Attributes
     ----------
-    :param trajectory:
-    :param position_name:
+
+    trajectory : mdtraj trajectory
+
+    position_name : position name
 
 
     Examples
