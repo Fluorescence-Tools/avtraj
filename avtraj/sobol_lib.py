@@ -61,6 +61,7 @@ def i4_bit_hi1(n):
     return bit
 
 
+@nb.jit
 def i4_bit_lo0(n):
     """
     I4_BIT_LO0 returns the position of the low 0 bit base 2 in an integer.

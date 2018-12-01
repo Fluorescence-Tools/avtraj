@@ -4,9 +4,16 @@ from setuptools import setup
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
+requirements = [
+    'mdtraj',
+    'numba',
+    'LabelLib',
+    'numpy'
+]
+
 setup(
     name="avtraj",
-    version="0.0.6",
+    version="0.0.8",
     author="Thomas-Otavio Peulen",
     url="https://github.com/Fluorescence-Tools/avtraj",
     author_email="thomas.otavio.peulen@gmail.com",
@@ -17,11 +24,7 @@ setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     license="LGPLv2.1",
-    install_requires=[
-        'LabelLib',
-        'mdtraj',
-        'numba'
-    ],
+    install_requires=requirements,
     packages=setuptools.find_packages(),
     classifiers=[
         "Programming Language :: Python",
@@ -39,8 +42,7 @@ setup(
     ],
     include_package_data=True,
     package_data={
-        'avtraj': ['avtraj/*.json'],
-        'avtraj.examples': ['avtraj/examples/*.*']
+        'avtraj': ['avtraj/*.json']
     },
 )
 
