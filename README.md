@@ -1,5 +1,8 @@
+
 AvTraj
 ======
+[![Anaconda-Server Badge](https://anaconda.org/tpeulen/avtraj/badges/installer/conda.svg)](https://conda.anaconda.org/tpeulen)
+[![Anaconda-Server Badge](https://anaconda.org/tpeulen/avtraj/badges/platforms.svg)](https://anaconda.org/tpeulen/avtraj)
 
 AvTraj is tool to calculate FRET observables from MD-trajectories. Read, write and analyze accessible volumes (AVs) 
 using MD trajectories as an input with only a few lines of Python code. By the use of LabelLib AvTraj provides

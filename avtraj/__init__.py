@@ -1010,9 +1010,9 @@ class AvDistanceTrajectory(PythonBase):
                     rDA = av1.dRDA(av2)
 
                     if self.verbose:
-                        print "RDA: %s" % rDA
-                        print "RDA_E: %s" % rDAE
-                        print "RDA_mp: %s" % rMP
+                        print("RDA: %s" % rDA)
+                        print("RDA_E: %s" % rDAE)
+                        print("RDA_mp: %s" % rMP)
 
                     if self.distances[distance_key]['distance_type'] == 'RDAMean':
                         self.distances[distance_key]['model_distance'] = rDA
