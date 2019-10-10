@@ -3,13 +3,15 @@ import avtraj as avt
 import json
 import pylab as p
 
+import avtraj.trajectory
+
 traj = md.load('./examples/hGBP1_out_3.h5')
 labeling = json.load(open('./examples/labeling.fps.json', 'r'))
 
 # Pass a trajectory to fps.AVTrajectory. This creates an object, which can be
 # accessed as a list. The objects within the "list" are accessible volumes
-av_traj_1 = avt.AVTrajectory(traj, '18D', attachment_atom_selection='resSeq 18 and name CB', strip_mask='resSeq 18')
-av_traj_1 = avt.AVTrajectory(traj, '18D', attachment_atom_selection='resSeq 18 and name CB', strip_mask='resSeq 7')
+av_traj_1 = avtraj.trajectory.AVTrajectory(traj, '18D', attachment_atom_selection='resSeq 18 and name CB', strip_mask='resSeq 18')
+av_traj_1 = avtraj.trajectory.AVTrajectory(traj, '18D', attachment_atom_selection='resSeq 18 and name CB', strip_mask='resSeq 7')
 
 # These accessible volumes can be saved as xyz-file
 av_traj_1[0].save_xyz('test_18_0.xyz')

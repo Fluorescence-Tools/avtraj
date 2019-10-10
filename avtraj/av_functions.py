@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Dict, Tuple
+from typing import Dict, Tuple, List
 
 import os
 import json
@@ -62,22 +62,23 @@ def calculate_av(
     Parameters
     ----------
     xyzr : array
-        Numpy array containing the cartesian coordinates and radii of the obstacles.
+        Numpy array containing the cartesian coordinates and radii
+        of the obstacles.
 
     attachment_coordinate : array
         Numpy array of the cartesian coordinates of the attachment point
 
     parameters : dict
-        Python dictionary containing all parameters necessary for the calculation of an
-        accessible volume (details see documentation of JSON input file)
+        Python dictionary containing all parameters necessary for the
+        calculation of an accessible volume (details see documentation
+        of JSON input file)
 
     Returns
     -------
-        The points of the AV with positive density, a 3D grid filled with the AV densities,
-        and the attachment coordinates. All return values are numpy arrays. All coordinates
-        are cartesian coordinates.
+        The points of the AV with positive density, a 3D grid filled with the
+        AV densities, and the attachment coordinates. All return values are
+        numpy arrays. All coordinates are cartesian coordinates.
     """
-    print(xyzr)
 
     if kwargs['simulation_type'] == 'AV3':
         av = ll.dyeDensityAV3(
@@ -167,8 +168,12 @@ def write(
     fp = open(filename, mode)
 
     al = ["%-6s%5d %4s%1s%3s %1s%4d%1s   %8.3f%8.3f%8.3f%6.2f%6.2f          %2s%2s\n" %
-          ("ATOM ", at['atom_id'], at['atom_name'], " ", at['res_name'], at['chain'], at['res_id'], " ",
-           at['coord'][0], at['coord'][1], at['coord'][2], 0.0, at['bfactor'], at['element'], "  ")
+          (
+              "ATOM ", at['atom_id'], at['atom_name'], " ", at['res_name'],
+              at['chain'], at['res_id'], " ",
+              at['coord'][0], at['coord'][1], at['coord'][2],
+              0.0, at['bfactor'], at['element'], "  "
+          )
           for at in atoms
     ]
     if append_model:
@@ -205,9 +210,18 @@ def write_xyz(
     fp.close()
 
 
-def write_points(filename, points, verbose=False, mode='xyz', density=None):
+def write_points(
+        filename: str,
+        points: np.ndarray,
+        verbose: bool = False,
+        mode: str = 'xyz',
+        density: List[float] = None
+):
     if mode == 'pdb':
-        atoms = np.empty(len(points), dtype={'names': PDB_KEYS, 'formats': PDB_FORMATS})
+        atoms = np.empty(
+            len(points),
+            dtype={'names': PDB_KEYS, 'formats': PDB_FORMATS}
+        )
         atoms['coord'] = points
         if density is not None:
             atoms['bfactor'] = density
@@ -289,11 +303,12 @@ def get_vdw(
     :param trajectory: mdtraj
     :return:
     """
-    return np.array(
+    vdw = np.array(
         [_periodic_table[atom.element.symbol]['vdW radius']
          for atom in trajectory.topology.atoms],
         dtype=np.float64
     )
+    return vdw
 
 
 def histogram_rda(

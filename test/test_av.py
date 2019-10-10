@@ -4,11 +4,13 @@ import utils
 import os
 import unittest
 
+
 TOPDIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 utils.set_search_paths(TOPDIR)
 
+import json
 import mdtraj as md
-import avtraj as avt
+import avtraj
 import numpy as np
 
 
@@ -27,20 +29,21 @@ class Tests(unittest.TestCase):
             'linker_width': 1.0,
             'radius1': 3.5,
             'simulation_grid_resolution': 1.0,
+            'residue_seq_number': 57,
+            'atom_name': 'CA'
         }
-        av_traj = avt.AVTrajectory(
+        av_traj = avtraj.trajectory.AVTrajectory(
             traj,
             av_parameters=av_parameters,
-            name='57',
-            attachment_atom_selection='resSeq 57 and name CB'
+            name='57'
         )
         self.assertEqual(
             type(av_traj),
-            avt.AVTrajectory
+            avtraj.trajectory.AVTrajectory
         )
         self.assertEqual(
             type(av_traj[0]),
-            avt.AccessibleVolume
+            avtraj.av.AccessibleVolume
         )
 
     def test_save_av(self):
@@ -51,15 +54,23 @@ class Tests(unittest.TestCase):
             xtc_filename,
             top=topology_filename
         )
-        av_traj = avt.AVTrajectory(
+        av_parameters = {
+            'simulation_type': 'AV1',
+            'linker_length': 20.0,
+            'linker_width': 1.0,
+            'radius1': 3.5,
+            'simulation_grid_resolution': 1.0,
+            'residue_seq_number': 57,
+            'atom_name': 'CA'
+        }
+        av_traj = avtraj.trajectory.AVTrajectory(
             traj,
             name='57',
-            attachment_atom_selection='resSeq 57 and name CB'
+            av_parameters=av_parameters
         )
         av_traj[0].save_av()
 
     def test_distance(self):
-        # First load an MD trajectory by mdtraj
         xtc_filename = './data/xtc/1am7_corrected.xtc'
         topology_filename = './data/xtc/1am7_protein.pdb'
         traj = md.load(
@@ -73,13 +84,14 @@ class Tests(unittest.TestCase):
             'linker_width': 1.0,
             'radius1': 3.5,
             'simulation_grid_resolution': 1.0,
+            'residue_seq_number': 57,
+            'atom_name': 'CA'
         }
 
-        av_traj_donor = avt.AVTrajectory(
+        av_traj_donor = avtraj.trajectory.AVTrajectory(
             traj,
             av_parameters=av_parameters_donor,
             name='57',
-            attachment_atom_selection='resSeq 57 and name CB'
         )
 
         av_parameters_acceptor = {
@@ -88,13 +100,14 @@ class Tests(unittest.TestCase):
             'linker_width': 1.0,
             'radius1': 3.5,
             'simulation_grid_resolution': 1.0,
+            'residue_seq_number': 136,
+            'atom_name': 'CA'
         }
 
-        av_traj_acceptor = avt.AVTrajectory(
+        av_traj_acceptor = avtraj.trajectory.AVTrajectory(
             traj,
             av_parameters=av_parameters_acceptor,
-            name='136',
-            attachment_atom_selection='resSeq 136 and name CB'
+            name='136'
         )
 
         distances = []
@@ -111,28 +124,118 @@ class Tests(unittest.TestCase):
             )
 
         distances_ref = np.array(
-            [
-                45.63678211, 46.04870158, 45.49225274, 45.66995817, 46.65077912,
-                44.74206475, 42.85184406, 43.77119739, 42.2474873, 43.16160116,
-                44.60830365, 44.56985815, 45.26192564, 43.64526989, 45.60707217,
-                44.14293877, 45.03892491, 47.23718578, 47.15493861, 43.45212065,
-                49.28761748, 46.03995011, 46.95940379, 48.04215313, 47.39585838,
-                48.31693546, 49.08759384, 50.8372694, 50.04364712, 50.02173472,
-                49.38929464, 49.02257673, 47.55191912, 49.08684268, 49.46213924,
-                49.55160482, 49.01382552, 48.63494367, 48.9723047, 46.20087407,
-                49.58790713, 51.51456704, 47.62595471, 48.9599253, 47.65023549,
-                47.66830441, 48.78244785, 46.6308259, 49.16116225, 48.23696728,
-                49.62011666
-            ]
+            [46.58445179, 46.10678172, 46.64247226, 46.97069943, 47.7507035,
+             45.31224551,
+             44.55804641, 45.59746112, 44.4557364,  45.01399551, 45.40064313,
+             45.90336265,
+             46.12118593, 44.55974777, 46.4193657,  44.15305281, 45.92528762,
+             47.52961313,
+             47.49590247, 43.94771434, 49.33894502, 47.72217377, 47.80850216,
+             48.37280611,
+             47.59650977, 48.98418512, 49.41689837, 51.25695952, 50.29100387,
+             50.37597367,
+             49.90922226, 49.45598574, 48.19644809, 49.9073324,  50.00831528,
+             49.72726928,
+             49.52950194, 48.86970621, 49.33807575, 47.00636766, 49.9563316,
+             51.46870868,
+             48.05152249, 49.60495012, 48.17830894, 48.3569286,  49.35266764,
+             47.42559334,
+             49.46402385, 48.52772225, 49.79250257]
         )
         self.assertEqual(
             np.allclose(
                 np.array(distances),
                 distances_ref,
-                atol=0.5
+                atol=1.0
             ),
             True
         )
+
+    def test_labeling_file(self):
+        xtc_filename = './data/xtc/1am7_corrected.xtc'
+        topology_filename = './data/xtc/1am7_protein.pdb'
+        traj = md.load(
+            xtc_filename,
+            top=topology_filename
+        )
+
+        labeling_file = './data/labeling.fps.json'
+        av_dist = avtraj.trajectory.AvDistanceTrajectory(
+            traj,
+            json.load(
+                open(
+                    labeling_file
+                )
+            )
+        )
+        d_ref = {
+            '158_57': {
+                'rMP': [
+                    43.829381736544605, 44.10156625284363,
+                    43.967130339424806, 43.82132925834934,
+                    45.414706914860034, 41.76623812423402,
+                    41.43372888588546, 42.44166006076308,
+                    41.23644763594793, 41.826784810818715
+                ], 'rDA': [
+                    47.11416931661129, 47.388952173485755,
+                    47.218177980394366, 47.05746754247665,
+                    48.591604348430636, 45.213844204669,
+                    45.006189569416044, 45.826895953736305,
+                    44.69403249952793, 45.31119674283981
+                ], 'rDAE': [
+                    48.05623254175495, 48.297890696899145,
+                    48.093081710691074, 47.945264281224695,
+                    49.14637697087784, 46.648591198310264,
+                    46.52195315168675, 47.166464042318125,
+                    46.23803209414695, 46.77764388100564
+                ], 'chi2': [
+                    5.3384868656373206, 5.46931002909805,
+                    4.088271923570988, 4.479691168548389,
+                    4.331099480742713, 4.652876099989579,
+                    5.742968026665894, 3.7369019221906656,
+                    3.367216724426841, 4.533413274090362
+                ]},
+            '57_136': {
+                'rMP': [
+                    43.829381736544605, 44.10156625284363,
+                    43.967130339424806, 43.82132925834934,
+                    45.414706914860034, 41.76623812423402,
+                    41.43372888588546, 42.44166006076308,
+                    41.23644763594793, 41.826784810818715
+                ],
+                'rDA': [
+                    47.11416931661129, 47.388952173485755,
+                    47.218177980394366, 47.05746754247665,
+                    48.591604348430636, 45.213844204669,
+                    45.006189569416044, 45.826895953736305,
+                    44.69403249952793, 45.31119674283981
+                ], 'rDAE': [
+                    48.05623254175495, 48.297890696899145,
+                    48.093081710691074, 47.945264281224695,
+                    49.14637697087784, 46.648591198310264,
+                    46.52195315168675, 47.166464042318125,
+                    46.23803209414695, 46.77764388100564
+                ], 'chi2': [
+                    5.3384868656373206, 5.46931002909805,
+                    4.088271923570988, 4.479691168548389,
+                    4.331099480742713, 4.652876099989579,
+                    5.742968026665894, 3.7369019221906656,
+                    3.367216724426841, 4.533413274090362
+                ]
+            }
+        }
+
+        d_m = av_dist[:10]
+        for key_label in d_ref:
+            for key_v in d_ref[key_label]:
+                self.assertEqual(
+                    np.allclose(
+                        d_m[key_label][key_v],
+                        d_ref[key_label][key_v],
+                        0.4
+                    ),
+                    True
+                )
 
 
 if __name__ == '__main__':
