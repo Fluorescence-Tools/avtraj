@@ -69,6 +69,15 @@ class Tests(unittest.TestCase):
             av_parameters=av_parameters
         )
         av_traj[0].save_av()
+        self.assertEqual(
+            os.path.isfile(
+                os.path.join(
+                    os.path.dirname(__file__),
+                    '57_0.xyz'
+                )
+            ),
+            True
+        )
 
     def test_distance(self):
         xtc_filename = './data/xtc/1am7_corrected.xtc'

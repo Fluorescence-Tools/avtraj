@@ -87,7 +87,7 @@ class PythonBase(object):
     def from_yaml(self, string="", filename=None):
         if filename is not None:
             with open(filename, 'r') as fp:
-                j = yaml.load(fp)
+                j = yaml.safe_load(fp)
         elif string is not None:
             j = json.loads(string)
         else:
