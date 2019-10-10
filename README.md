@@ -60,9 +60,8 @@ conda --add channels tpeulen
 conda install avtraj
 ```
 
-
 ## Code Example
-    ```python
+```python
     import mdtraj as md
     import avtraj as avt
     import json
@@ -129,7 +128,7 @@ conda install avtraj
         )
     )
     print(av_dist[:10])
-    ```
+```
 
 ## Citations 
 * MDTraj - [![DOI for Citing MDTraj](https://img.shields.io/badge/DOI-10.1016%2Fj.bpj.2015.08.015-blue.svg)](http://doi.org/10.1016/j.bpj.2015.08.015)
