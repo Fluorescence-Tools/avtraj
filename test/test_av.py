@@ -16,13 +16,15 @@ import numpy as np
 
 class Tests(unittest.TestCase):
 
+    xtc_filename = './data/xtc/1am7_corrected.xtc'
+    topology_filename = './data/xtc/1am7_protein.pdb'
+    traj = md.load(
+        xtc_filename,
+        top=topology_filename
+    )
+    n_frames = len(traj)
+
     def test_av_traj_init_calc(self):
-        xtc_filename = './data/xtc/1am7_corrected.xtc'
-        topology_filename = './data/xtc/1am7_protein.pdb'
-        traj = md.load(
-            xtc_filename,
-            top=topology_filename
-        )
         av_parameters = {
             'simulation_type': 'AV1',
             'linker_length': 20.0,
@@ -33,7 +35,7 @@ class Tests(unittest.TestCase):
             'atom_name': 'CA'
         }
         av_traj = avtraj.trajectory.AVTrajectory(
-            traj,
+            self.traj,
             av_parameters=av_parameters,
             name='57'
         )
@@ -47,13 +49,6 @@ class Tests(unittest.TestCase):
         )
 
     def test_save_av(self):
-        # First load an MD trajectory by mdtraj
-        xtc_filename = './data/xtc/1am7_corrected.xtc'
-        topology_filename = './data/xtc/1am7_protein.pdb'
-        traj = md.load(
-            xtc_filename,
-            top=topology_filename
-        )
         av_parameters = {
             'simulation_type': 'AV1',
             'linker_length': 20.0,
@@ -64,7 +59,7 @@ class Tests(unittest.TestCase):
             'atom_name': 'CA'
         }
         av_traj = avtraj.trajectory.AVTrajectory(
-            traj,
+            self.traj,
             name='57',
             av_parameters=av_parameters
         )
@@ -80,13 +75,6 @@ class Tests(unittest.TestCase):
         )
 
     def test_distance(self):
-        xtc_filename = './data/xtc/1am7_corrected.xtc'
-        topology_filename = './data/xtc/1am7_protein.pdb'
-        traj = md.load(
-            xtc_filename,
-            top=topology_filename
-        )
-
         av_parameters_donor = {
             'simulation_type': 'AV1',
             'linker_length': 20.0,
@@ -96,9 +84,8 @@ class Tests(unittest.TestCase):
             'residue_seq_number': 57,
             'atom_name': 'CA'
         }
-
         av_traj_donor = avtraj.trajectory.AVTrajectory(
-            traj,
+            self.traj,
             av_parameters=av_parameters_donor,
             name='57',
         )
@@ -114,15 +101,14 @@ class Tests(unittest.TestCase):
         }
 
         av_traj_acceptor = avtraj.trajectory.AVTrajectory(
-            traj,
+            self.traj,
             av_parameters=av_parameters_acceptor,
             name='136'
         )
 
         distances = []
         distances_fret = []
-        n_frames = len(traj)
-        for i in range(n_frames):
+        for i in range(self.n_frames):
             av_d = av_traj_donor[i]
             av_a = av_traj_acceptor[i]
             distances.append(
@@ -161,16 +147,9 @@ class Tests(unittest.TestCase):
         )
 
     def test_labeling_file(self):
-        xtc_filename = './data/xtc/1am7_corrected.xtc'
-        topology_filename = './data/xtc/1am7_protein.pdb'
-        traj = md.load(
-            xtc_filename,
-            top=topology_filename
-        )
-
         labeling_file = './data/labeling.fps.json'
         av_dist = avtraj.trajectory.AvDistanceTrajectory(
-            traj,
+            self.traj,
             json.load(
                 open(
                     labeling_file
