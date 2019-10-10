@@ -3,7 +3,7 @@
 
 """
 from __future__ import annotations
-from typing import Dict
+from typing import Dict, Tuple
 
 import os
 import json
@@ -233,22 +233,31 @@ class AccessibleVolume(
     """
 
     @property
-    def xyzr(self):
+    def xyzr(
+            self
+    ) -> np.ndarray:
         """Cartesian coordinates and radii of the obstacles
         """
         return self._xyzr
 
     @property
-    def allowed_sphere_radius(self):
+    def allowed_sphere_radius(
+            self
+    ) -> float:
         return self._allowed_sphere_radius
 
     @allowed_sphere_radius.setter
-    def allowed_sphere_radius(self, v):
+    def allowed_sphere_radius(
+            self,
+            v: float
+    ):
         self._allowed_sphere_radius = v
         self.update_av()
 
     @property
-    def grid_shape(self):
+    def grid_shape(
+            self
+    ) -> Tuple[int, int, int]:
         """The number of grid-points in each direction
         """
         return self.grid_density.shape
@@ -310,7 +319,9 @@ class AccessibleVolume(
         xm = np.dot(points[:, 0], weights)
         ym = np.dot(points[:, 1], weights)
         zm = np.dot(points[:, 2], weights)
-        return np.array([xm, ym, zm], dtype=np.float64) / sw
+        return np.array(
+            [xm, ym, zm], dtype=np.float64
+        ) / sw
 
     @property
     def interaction_sites(self):
@@ -319,7 +330,10 @@ class AccessibleVolume(
         """
         return self._xyzrq
 
-    def dRmp(self, av):
+    def dRmp(
+            self,
+            av: AccessibleVolume
+    ):
         """Calculate the distance between the mean positions with respect to the accessible volume `av`
 
         Remark: The distance between the mean positions is not a real distance
@@ -649,7 +663,9 @@ class AccessibleVolume(
                 acv.grid = list(density_acv.flatten())
                 acv = av_functions.ll.addWeights(acv, av.interaction_sites)
 
-                density_acv = np.array(acv.grid).reshape(acv.shape, order='F') * density_acv_mask
+                density_acv = np.array(acv.grid).reshape(
+                    acv.shape, order='F'
+                ) * density_acv_mask
                 density_acv *= av.contact_volume_trapped_fraction / density_acv.sum()
 
                 density_all = density_acv + density_free
@@ -658,7 +674,9 @@ class AccessibleVolume(
                 xyzrq = av.interaction_sites
                 xyzrq[4] *= -100
                 av_free = av_functions.ll.addWeights(av_all, xyzrq)
-                density_free = np.array(av_free.grid).reshape(av_free.shape, order='F')
+                density_free = np.array(av_free.grid).reshape(
+                    av_free.shape, order='F'
+                )
                 density_free = np.clip(density_free, 0, 1)
 
                 # calculate acv
@@ -672,27 +690,15 @@ class AccessibleVolume(
         else:
             density_all /= density_all.sum()
 
-        grid_origin = np.array(
-            av_all.originXYZ,
-            dtype=np.float64
-        )
-        dg = av_all.discStep
-        # points = av_functions.density2points(
-        #     dg,
-        #     density_all,
-        #     grid_origin
-        # )
-        # self._points = points
         self._points = av_all.points().T
-
         self._grid_density = density_all
         av_all.grid = list(density_all.flatten(order='F'))
         self._av_grid = av_all
 
     def __init__(
             self,
-            xyzr,
-            attachment_coordinate,
+            xyzr: np.ndarray,
+            attachment_coordinate: np.ndarray,
             **kwargs
     ):
         """
@@ -925,12 +931,17 @@ class AVTrajectory(PythonBase):
         else:
             # Determine attachment atom index
             selection = ""
-            selection += "chainid " + av_functions.LETTERS[
-                    av_parameters['chain_identifier'].lower()
-            ]
-            selection += " and residue " + str(av_parameters['residue_seq_number'])
+            selection += "residue " + str(av_parameters['residue_seq_number'])
+            chain_id = av_parameters['chain_identifier'].lower()
+            try:
+                selection += " and chainid " + av_functions.LETTERS[
+                        chain_id
+                ]
+            except KeyError:
+                print("Not a valid chain ID")
             selection += " and name " + str(av_parameters['atom_name'])
-        self.attachment_atom_index = self.trajectory.topology.select(selection)[0]
+        attachment_atom_index = self.trajectory.topology.select(selection)[0]
+        self.attachment_atom_index = attachment_atom_index
 
         # Apply "strip_mask" and change vdw-radii of atoms selected by the strip mask
         # to zero.
@@ -1021,7 +1032,9 @@ class AVTrajectory(PythonBase):
             return re
 
 
-class AvDistanceTrajectory(PythonBase):
+class AvDistanceTrajectory(
+    PythonBase
+):
     """
     The AvPotential class provides the possibility to calculate the reduced or unreduced chi2 given a set of
     labeling positions and experimental distances. Here the labeling positions and distances are provided as
@@ -1045,7 +1058,7 @@ class AvDistanceTrajectory(PythonBase):
 
     def __init__(self, trajectory, labeling, **kwargs):
         kwargs['labeling'] = labeling
-        super(self.__class__, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self.distances = labeling['Distances']
         self.positions = labeling['Positions']
         self.trajectory = trajectory
@@ -1074,6 +1087,7 @@ class AvDistanceTrajectory(PythonBase):
         return len(self.trajectory)
 
     def __getitem__(self, key):
+
         if isinstance(key, int):
             frame_idx = [key]
         else:
@@ -1082,7 +1096,12 @@ class AvDistanceTrajectory(PythonBase):
             step = 1 if key.step is None else key.step
             frame_idx = range(start, min(stop, len(self)), step)
 
-        re = dict((key, {'rMP': [], 'rDA': [], 'rDAE': [], 'chi2': []}) for key in self.distances.keys())
+        re = dict(
+            (
+                key,
+                {'rMP': [], 'rDA': [], 'rDAE': [], 'chi2': []}
+            ) for key in self.distances.keys()
+        )
         for frame_i in frame_idx:
             # Don't repeat calculations
             if frame_i in self._d.keys():

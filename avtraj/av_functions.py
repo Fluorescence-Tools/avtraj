@@ -1,4 +1,5 @@
 from __future__ import annotations
+from typing import Dict, Tuple
 
 import os
 import json
@@ -48,7 +49,11 @@ PDB_FORMATS = [
 sobol_sequence = []#sobol_lib.i4_sobol_generate(6, DISTANCE_SAMPLES)
 
 
-def calculate_av(xyzr, attachment_coordinate, **kwargs):
+def calculate_av(
+        xyzr: np.ndarray,
+        attachment_coordinate: np.ndarray,
+        **kwargs
+):
     """Determines for a label defined by parameters defining the
     linker and the shape all grid points which can be reached by a linker.
 
@@ -72,6 +77,7 @@ def calculate_av(xyzr, attachment_coordinate, **kwargs):
         and the attachment coordinates. All return values are numpy arrays. All coordinates
         are cartesian coordinates.
     """
+    print(xyzr)
 
     if kwargs['simulation_type'] == 'AV3':
         av = ll.dyeDensityAV3(
@@ -99,7 +105,11 @@ def calculate_av(xyzr, attachment_coordinate, **kwargs):
     return av
 
 
-def calculate_min_linker_length(xyzr, attachment_coordinate, parameters):
+def calculate_min_linker_length(
+        xyzr: np.ndarray,
+        attachment_coordinate: np.ndarray,
+        parameters: Dict
+) -> np.ndarray:
     """ Calculates a 3D grid filled with the minimum linker length to
     reach a certain grid point. By default AV1 calculations using the first
     radius (radius1) are used.
@@ -127,10 +137,18 @@ def calculate_min_linker_length(xyzr, attachment_coordinate, parameters):
         dye_radius,
         disc_step
     )
-    return np.array(av.grid).reshape(av.shape, order='F')
+    return np.array(
+        av.grid
+    ).reshape(av.shape, order='F')
 
 
-def write(filename, atoms=None, append_model=False, append_coordinates=False, **kwargs):
+def write(
+        filename,
+        atoms=None,
+        append_model=False,
+        append_coordinates=False,
+        **kwargs
+):
     """ Writes a structured numpy array containing the PDB-info to a PDB-file
 
     If append_model and append_coordinates are False the file is overwritten. Otherwise the atomic-coordinates
@@ -161,7 +179,11 @@ def write(filename, atoms=None, append_model=False, append_coordinates=False, **
     fp.close()
 
 
-def write_xyz(filename, points, verbose=False):
+def write_xyz(
+        filename: str,
+        points: np.ndarray,
+        verbose: bool = False
+):
     """
     Writes the points as xyz-format file. The xyz-format file can be opened and displayed for instance
     in PyMol
@@ -194,7 +216,12 @@ def write_points(filename, points, verbose=False, mode='xyz', density=None):
         write_xyz(filename, points, verbose=verbose)
 
 
-def open_dx(density, ro, rn, dr):
+def open_dx(
+        density: np.ndarray,
+        ro: Tuple[float, float, float],
+        rn: Tuple[int, int, int],
+        dr: float
+):
     """ Returns a open_dx string compatible with PyMOL
 
     :param density: 3d-grid with values (densities)
@@ -423,7 +450,10 @@ def mean_fret_efficiency_label_lib(
     )
 
 
-def dRmp(av1, av2):
+def dRmp(
+        av1,
+        av2
+):
     """Calculate the distance between the mean position of two accessible volumes
 
     >>> import mfm
@@ -547,45 +577,4 @@ def density2points_labellib(
         av
 ):
     return av.points()
-
-
-@nb.jit(nopython=True)
-def density2points(
-        dg: float,
-        density_3d: np.ndarray,
-        grid_origin: np.ndarray
-):
-    nx, ny, nz = density_3d.shape
-    n_max = nx * ny * nz
-    points = np.empty(
-        (n_max, 4), dtype=np.float64
-    )
-
-    gdx = np.empty(nx, dtype=np.float64)
-    for i in range(0, nx):
-        gdx[i] = i * dg
-    gdy = np.empty(nx, dtype=np.float64)
-    for i in range(0, nx):
-        gdy[i] = i * dg
-    gdz = np.empty(nx, dtype=np.float64)
-    for i in range(0, nx):
-        gdz[i] = i * dg
-
-    x0 = grid_origin[0]
-    y0 = grid_origin[1]
-    z0 = grid_origin[2]
-
-    n = 0
-    for ix in range(nx):
-        for iy in range(ny):
-            for iz in range(nz):
-                d = density_3d[ix, iy, iz]
-                if d > 0:
-                    points[n, 0] = gdx[ix] + x0
-                    points[n, 1] = gdy[iy] + y0
-                    points[n, 2] = gdz[iz] + z0
-                    points[n, 3] = d
-                    n += 1
-    return points[:n]
-
 

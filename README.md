@@ -120,7 +120,7 @@ Code Example
     # labeling file and a "distance file" needs to be specified. The distance
     # file contains a set of labeling positions and distances and should be
     # compatible to the labeling files used by the software "Olga". By default the 
-    av_dist = avt.AvDistanceTrajectory(traj, './examples/hGBP1_distance.json')
+    av_dist = avt.AvDistanceTrajectory(traj, './test/data/labeling.fps.json')
     ```
 
 
