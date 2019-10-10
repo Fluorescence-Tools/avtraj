@@ -318,48 +318,6 @@ def histogram_rda(
     return p, rda_axis
 
 
-def average_distance(av1, av2, **kwargs):
-    """Calculate the mean distance between two array of points
-
-    Parameters
-    ----------
-    points_1 : array
-        An array of points containing the cartesian coordinates of the points and the weight of each
-        point [x, y, z, weight].
-
-    points_2 : array
-        An array of points containing the cartesian coordinates of the points and the weight of each
-        point [x, y, z, weight].
-
-    distance_samples : int
-        The number of randomly picked distances for the calculation of the average distance between
-        the two arrays of points
-
-    use_weights : bool
-        If use_weights is True the weights of the points are considered in the caclualtion of the
-        average distance between the points.
-
-
-    Returns
-    -------
-    float
-        The distance between the two set of points
-
-    """
-    kwargs['grid1'] = av1.grid_density
-    kwargs['grid2'] = av2.grid_density
-    kwargs['dg_1'] = av1.parameters['simulation_grid_resolution']
-    kwargs['dg_2'] = av2.parameters['simulation_grid_resolution']
-    kwargs['grid_origin_1'] = av1.attachment_coordinate
-    kwargs['grid_origin_2'] = av2.attachment_coordinate
-    d = random_distances(av1.points, av2.points, **kwargs)
-
-    if kwargs.get('use_weights', True):
-        return np.dot(d[:, 0], d[:, 1]) / d[:, 1].sum()
-    else:
-        return np.mean(d[:, 0])
-
-
 def average_distance_labellib(
         av1,
         av2,
@@ -393,7 +351,11 @@ def average_distance_labellib(
 
     """
     distance_samples = kwargs.get('distance_samples', DISTANCE_SAMPLES)
-    return ll.meanDistance(av1._av_grid, av2._av_grid, distance_samples)
+    return ll.meanDistance(
+        av1._av_grid,
+        av2._av_grid,
+        distance_samples
+    )
 
 
 def widthRDA(
@@ -418,7 +380,7 @@ def widthRDA(
     return np.sqrt(v)
 
 
-def mean_fret_efficiency(
+def mean_fret_efficiency_label_lib(
         av1,
         av2,
         forster_radius=52.0,
@@ -452,52 +414,13 @@ def mean_fret_efficiency(
     >>> mfm.fps.RDAMeanE(av1, av2)
     52.602731299544686
     """
-    kwargs['grid1'] = av1.grid_density
-    kwargs['grid2'] = av2.grid_density
-    kwargs['dg_1'] = av1.parameters['simulation_grid_resolution']
-    kwargs['dg_2'] = av2.parameters['simulation_grid_resolution']
-    kwargs['grid_origin_1'] = av1.attachment_coordinate
-    kwargs['grid_origin_2'] = av2.attachment_coordinate
-
-    d = random_distances(av1.points, av2.points, **kwargs)
-    r = d[:, 0]
-    w = d[:, 1]
-    e = (1. / (1. + (r / forster_radius) ** 6.0))
-    mean_fret = np.dot(w, e) / w.sum()
-    return mean_fret
-
-
-def mean_fret_efficiency_label_lib(av1, av2, forster_radius=52.0, **kwargs):
-    """Calculate the FRET-averaged (PDA/Intensity) distance between two accessible volumes
-
-    Parameters
-    ----------
-
-    points_1 : array
-        An array of points containing the cartesian coordinates of the points and the weight of each
-        point [x, y, z, weight].
-
-    points_2 : array
-        An array of points containing the cartesian coordinates of the points and the weight of each
-        point [x, y, z, weight].
-
-
-    Returns
-    -------
-    float
-        The mean FRET efficiency for the two sets of points
-
-    Examples
-    --------
-    >>> pdb_filename = '/examples/T4L_Topology.pdb'
-    >>> structure = mfm.Structure(pdb_filename)
-    >>> av1 = mfm.fps.AV(structure, residue_seq_number=72, atom_name='CB')
-    >>> av2 = mfm.fps.AV(structure, residue_seq_number=134, atom_name='CB')
-    >>> mfm.fps.RDAMeanE(av1, av2)
-    52.602731299544686
-    """
     distance_samples = kwargs.get('distance_samples', DISTANCE_SAMPLES)
-    return ll.meanEfficiency(av1._av_grid, av2._av_grid, forster_radius, distance_samples)
+    return ll.meanEfficiency(
+        av1._av_grid,
+        av2._av_grid,
+        forster_radius,
+        distance_samples
+    )
 
 
 def dRmp(av1, av2):
@@ -618,6 +541,12 @@ def random_distances(
     distances[:, 1] /= distances[:, 1].sum()
 
     return distances
+
+
+def density2points_labellib(
+        av
+):
+    return av.points()
 
 
 @nb.jit(nopython=True)

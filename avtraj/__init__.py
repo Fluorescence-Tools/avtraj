@@ -174,7 +174,9 @@ class PythonBase(object):
         self.kw = kwargs
 
 
-class AccessibleVolume(PythonBase):
+class AccessibleVolume(
+    PythonBase
+):
     """Container class for accessible volumes
 
     An AccessibleVolume represents a collection of parameters needed to calculate the positional
@@ -675,12 +677,13 @@ class AccessibleVolume(PythonBase):
             dtype=np.float64
         )
         dg = av_all.discStep
-        points = av_functions.density2points(
-            dg,
-            density_all,
-            grid_origin
-        )
-        self._points = points
+        # points = av_functions.density2points(
+        #     dg,
+        #     density_all,
+        #     grid_origin
+        # )
+        # self._points = points
+        self._points = av_all.points().T
 
         self._grid_density = density_all
         av_all.grid = list(density_all.flatten(order='F'))
@@ -790,7 +793,7 @@ class AccessibleVolume(PythonBase):
             self.attachment_coordinate[2]
         )
         s += "\n"
-        s += super(self.__class__, self).__str__()
+        s += super().__str__()
         return s
 
 
@@ -887,13 +890,20 @@ class AVTrajectory(PythonBase):
 
         """
         if av_parameters is None:
-            av_parameters = dict()
+            av_parameters = {
+                    'simulation_type': 'AV1',
+                    'linker_length': 20.0,
+                    'linker_width': 1.0,
+                    'radius1': 3.5,
+                    'simulation_grid_resolution': 1.0,
+                }
+
         kwargs['name'] = name
         kwargs['verbose'] = kwargs.pop('verbose', False)
         av_parameters['labeling_site_name'] = name
         kwargs['av_parameters'] = av_parameters
         kwargs['cache_avs'] = kwargs.get('cache_avs', True)
-        super(self.__class__, self).__init__(self, **kwargs)
+        super().__init__(self, **kwargs)
 
         # Load the trajectory or use the passed mdtraj Trajectory object
         if isinstance(traj, str):

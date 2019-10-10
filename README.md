@@ -1,4 +1,3 @@
-
 AvTraj
 ======
 [![Build Status](https://travis-ci.org/Fluorescence-Tools/avtraj.svg?branch=master)](https://travis-ci.org/Fluorescence-Tools/avtraj)
@@ -32,8 +31,8 @@ AVTraj includes a command-line application, avana, for screening and
 Relation of other software and libraries
 ----------------------------------------
 LabelLib serves as core low-level library for the software Olga and the
- higher-level Python library AvTraj. The
-deprecated software FPS is independent of LabelLib.
+higher-level Python library AvTraj. The deprecated software FPS is
+independent of LabelLib.
 
 ![LabelLib and other software/libraries][3]
 

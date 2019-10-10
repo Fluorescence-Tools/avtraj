@@ -7,12 +7,14 @@ import unittest
 TOPDIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 utils.set_search_paths(TOPDIR)
 
+import mdtraj as md
+import avtraj as avt
+import numpy as np
+
 
 class Tests(unittest.TestCase):
 
     def test_av_traj_init_calc(self):
-        import mdtraj as md
-        import avtraj as avt
         xtc_filename = './data/xtc/1am7_corrected.xtc'
         topology_filename = './data/xtc/1am7_protein.pdb'
         traj = md.load(
@@ -41,11 +43,22 @@ class Tests(unittest.TestCase):
             avt.AccessibleVolume
         )
 
-    def test_distance(self):
-        import mdtraj as md
-        import avtraj as avt
-        import numpy as np
+    def test_save_av(self):
+        # First load an MD trajectory by mdtraj
+        xtc_filename = './data/xtc/1am7_corrected.xtc'
+        topology_filename = './data/xtc/1am7_protein.pdb'
+        traj = md.load(
+            xtc_filename,
+            top=topology_filename
+        )
+        av_traj = avt.AVTrajectory(
+            traj,
+            name='57',
+            attachment_atom_selection='resSeq 57 and name CB'
+        )
+        av_traj[0].save_av()
 
+    def test_distance(self):
         # First load an MD trajectory by mdtraj
         xtc_filename = './data/xtc/1am7_corrected.xtc'
         topology_filename = './data/xtc/1am7_protein.pdb'
@@ -120,8 +133,6 @@ class Tests(unittest.TestCase):
             ),
             True
         )
-
-
 
 
 if __name__ == '__main__':
