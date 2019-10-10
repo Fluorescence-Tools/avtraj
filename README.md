@@ -1,5 +1,4 @@
-AvTraj
-======
+# AvTraj
 [![Build Status](https://travis-ci.org/Fluorescence-Tools/avtraj.svg?branch=master)](https://travis-ci.org/Fluorescence-Tools/avtraj)
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/146004a9bd4a4c19b2fd55b8c3d10182)](https://www.codacy.com/manual/tpeulen/avtraj?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=Fluorescence-Tools/avtraj&amp;utm_campaign=Badge_Grade)
 [![Anaconda-Server Badge](https://anaconda.org/tpeulen/avtraj/badges/installer/conda.svg)](https://conda.anaconda.org/tpeulen)
@@ -27,9 +26,7 @@ Features include:
 AVTraj includes a command-line application, avana, for screening and
  analyzing structural models.
 
-
-Relation of other software and libraries
-----------------------------------------
+## Relation of other software and libraries
 LabelLib serves as core low-level library for the software Olga and the
 higher-level Python library AvTraj. The deprecated software FPS is
 independent of LabelLib.
@@ -55,11 +52,8 @@ accessible volumes (AVs), screen a set of structural models against
 experimental observables, and can generate new structural 
 models by rigid-body docking using experimental FRET data.
 
-
-Installation
-============
-Anaconda
---------
+## Installation
+### Anaconda
 
 ```commandline
 conda --add channels tpeulen
@@ -67,8 +61,7 @@ conda install avtraj
 ```
 
 
-Code Example
-============
+## Code Example
     ```python
     import mdtraj as md
     import avtraj as avt
@@ -138,15 +131,11 @@ Code Example
     print(av_dist[:10])
     ```
 
-
-Citations 
-=========
+## Citations 
 * MDTraj - [![DOI for Citing MDTraj](https://img.shields.io/badge/DOI-10.1016%2Fj.bpj.2015.08.015-blue.svg)](http://doi.org/10.1016/j.bpj.2015.08.015)
 * FPS - [![DOI for Citing FPS](https://img.shields.io/badge/DOI-10.1038/nmeth.2222-blue.svg)](http://doi.org/10.1038/nmeth.2222)
 
-
-License
-=======
+## License
 GNU LGPL version 2.1, or at your option a later version of the license.
 Various sub-portions of this library may be independently distributed under
 different licenses. See those files for their specific terms.
