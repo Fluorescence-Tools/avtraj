@@ -9,13 +9,22 @@ import numba as nb
 from math import sqrt
 
 import LabelLib as ll
+import mdtraj as md
 
-DISTANCE_SAMPLES = 200000
+DISTANCE_SAMPLES = 100000
 DISTANCE_SAMPLING_METHOD = "random"
 
-package_directory = os.path.dirname(os.path.abspath(__file__))
-_periodic_table = json.load(open(os.path.join(package_directory, 'elements.json')))['Periodic Table']
-VDW_DICT = dict((key, _periodic_table[key]["vdW radius"]) for key in _periodic_table.keys())
+package_directory = os.path.dirname(
+    os.path.abspath(__file__)
+)
+_periodic_table = json.load(
+    open(
+        os.path.join(package_directory, 'elements.json')
+    )
+)['Periodic Table']
+VDW_DICT = dict(
+    (key, _periodic_table[key]["vdW radius"]) for key in _periodic_table.keys()
+)
 
 LETTERS = {
     letter: str(index) for index, letter in enumerate(ascii_lowercase, start=0)
@@ -220,7 +229,17 @@ def open_dx(density, ro, rn, dr):
     return s
 
 
-def write_open_dx(filename, density, r0, nx, ny, nz, dx, dy, dz):
+def write_open_dx(
+        filename: str,
+        density,
+        r0,
+        nx: int,
+        ny: int,
+        nz: int,
+        dx: float,
+        dy: float,
+        dz: float
+):
     """Writes a density into a dx-file
 
     :param filename: output filename
@@ -236,16 +255,25 @@ def write_open_dx(filename, density, r0, nx, ny, nz, dx, dy, dz):
         fp.write(s)
 
 
-def get_vdw(trajectory):
+def get_vdw(
+        trajectory: md.Trajectory
+):
     """Get a vector of the vdw-radii
     :param trajectory: mdtraj
     :return:
     """
-    return np.array([_periodic_table[atom.element.symbol]['vdW radius'] for atom in trajectory.topology.atoms],
-                    dtype=np.float64)
+    return np.array(
+        [_periodic_table[atom.element.symbol]['vdW radius']
+         for atom in trajectory.topology.atoms],
+        dtype=np.float64
+    )
 
 
-def histogram_rda(av1, av2, **kwargs):
+def histogram_rda(
+        av1,
+        av2,
+        **kwargs
+):
     """Calculates the distance distribution with respect to a second accessible volume and returns the
     distance axis and the probability of the respective distance. By default the distance-axis "mfm.rda_axis"
     is taken to generate the histogram.
@@ -332,7 +360,11 @@ def average_distance(av1, av2, **kwargs):
         return np.mean(d[:, 0])
 
 
-def average_distance_labellib(av1, av2, **kwargs):
+def average_distance_labellib(
+        av1,
+        av2,
+        **kwargs
+):
     """Calculate the mean distance between two array of points
 
     Parameters
@@ -364,7 +396,11 @@ def average_distance_labellib(av1, av2, **kwargs):
     return ll.meanDistance(av1._av_grid, av2._av_grid, distance_samples)
 
 
-def widthRDA(av1, av2, **kwargs):
+def widthRDA(
+        av1,
+        av2,
+        **kwargs
+):
     """Calculate the width of the distance distribution between two accessible volumes
 
     >>> pdb_filename = '/examples/T4L_Topology.pdb'
@@ -382,7 +418,12 @@ def widthRDA(av1, av2, **kwargs):
     return np.sqrt(v)
 
 
-def mean_fret_efficiency(av1, av2, forster_radius=52.0, **kwargs):
+def mean_fret_efficiency(
+        av1,
+        av2,
+        forster_radius=52.0,
+        **kwargs
+):
     """Calculate the FRET-averaged (PDA/Intensity) distance between two accessible volumes
 
     Parameters
@@ -473,11 +514,13 @@ def dRmp(av1, av2):
     return np.sqrt(((av1.Rmp-av2.Rmp)**2).sum())
 
 
-@nb.jit
-def random_distances(p1, p2, grid1=None, grid2=None,
-                     dg_1=1.0, dg_2=1.0, grid_origin_1=None,
-                     grid_origin_2=None, distance_samples=None,
-                     distance_sampling_method=None):
+@nb.jit(nopython=True)
+def random_distances(
+        p1, p2, grid1=None, grid2=None,
+        dg_1=1.0, dg_2=1.0, grid_origin_1=None,
+        grid_origin_2=None, distance_samples=None,
+        distance_sampling_method=None
+):
     """Calculates random cartesian distances between two set of points where every
     point has a weight
 
