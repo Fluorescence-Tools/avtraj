@@ -93,9 +93,9 @@ pygments_style = None
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-#html_theme = "sphinx_rtd_theme" #'alabaster' #'classic'   #'bizstyle'#
+html_theme = "sphinx_rtd_theme" #'alabaster' #'classic'   #'bizstyle'#
 #html_theme = 'alabaster' #'classic'   #'bizstyle'#
-html_theme = 'bizstyle' # my (Thomas) favorite
+#html_theme = 'bizstyle' # my (Thomas) favorite
 #html_theme = 'haiku'   #'bizstyle'#
 
 

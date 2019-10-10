@@ -2,9 +2,11 @@
 """AvTraj - Accessible volume calculation for MD trajectories
 
 """
+from __future__ import annotations
+from typing import Dict
+
 import os
 import json
-import string
 
 import mdtraj
 import numpy as np
@@ -342,7 +344,11 @@ class AccessibleVolume(PythonBase):
         """
         return av_functions.dRmp(self, av)
 
-    def widthRDA(self, av, **kwargs):
+    def widthRDA(
+            self,
+            av: AccessibleVolume,
+            **kwargs
+    ):
         """Calculates the width of the distance distribution
 
         :param av:
@@ -351,7 +357,11 @@ class AccessibleVolume(PythonBase):
         """
         return av_functions.widthRDA(self, av, **kwargs)
 
-    def dRDA(self, av, **kwargs):
+    def dRDA(
+            self,
+            av: AccessibleVolume,
+            **kwargs
+    ):
         """Calculate the mean distance to a second AccessibleVolume object
 
         Parameters
@@ -379,7 +389,12 @@ class AccessibleVolume(PythonBase):
         #return av_functions.average_distance(self, av, **kwargs)
         return av_functions.average_distance_labellib(self, av, **kwargs)
 
-    def mean_fret_efficiency(self, av, forster_radius=50, **kwargs):
+    def mean_fret_efficiency(
+            self,
+            av: AccessibleVolume,
+            forster_radius: float = 50.0,
+            **kwargs
+    ):
         """
 
         Examples
@@ -402,7 +417,12 @@ class AccessibleVolume(PythonBase):
         #return av_functions.mean_fret_efficiency(self, av, forster_radius, **kwargs)
         return av_functions.mean_fret_efficiency_label_lib(self, av, forster_radius, **kwargs)
 
-    def dRDAE(self, av, forster_radius=50.0, **kwargs):
+    def dRDAE(
+            self,
+            av: AccessibleVolume,
+            forster_radius: float = 50.0,
+            **kwargs
+    ):
         """Calculate the FRET-averaged mean distance to a second accessible volume
 
         Parameters
@@ -429,7 +449,11 @@ class AccessibleVolume(PythonBase):
         mean_e = self.mean_fret_efficiency(av, forster_radius, **kwargs)
         return (1. / mean_e - 1.) ** (1. / 6.) * forster_radius
 
-    def pRDA(self, av, **kwargs):
+    def pRDA(
+            self,
+            av: AccessibleVolume,
+            **kwargs
+    ):
         """Histogram of the inter-AV distance distribution
 
         Parameters
@@ -455,7 +479,12 @@ class AccessibleVolume(PythonBase):
         """
         return av_functions.histogram_rda(self, av, **kwargs)
 
-    def distance(self, av, distance_type='RDAMeanE', **kwargs):
+    def distance(
+            self,
+            av: AccessibleVolume,
+            distance_type: str = 'RDAMeanE',
+            **kwargs
+    ):
         """Calculates the distance of one
 
         Parameters
@@ -493,16 +522,23 @@ class AccessibleVolume(PythonBase):
         else:
             return self.dRmp(av)
 
-    def save_av(self, write_dir=".", mode='xyz', **kwargs):
+    def save_av(
+            self,
+            filename: str = None,
+            write_dir: str = ".",
+            mode: str = 'xyz',
+            **kwargs
+    ):
         """Saves the accessible volume as xyz-file or open-dx density file
 
         Parameters
         ----------
         write_dir : string
             The directory where the AV file is saved.
-        filename : string
-            The filename to which the AV is saved. By default the filename of an AV is
-            the labeling_site_name attribute of the AccessibleVolume object.
+        filename : string (optional)
+            The filename to which the AV is saved. By default the filename of
+            an AV is the labeling_site_name attribute of the AccessibleVolume
+            object.
         mode : string
             'dx' saves openDX file otherwise the points are saved as xyz file.
         mode_options : string
@@ -525,11 +561,15 @@ class AccessibleVolume(PythonBase):
         >>> av_1.save_av(filename='test_av', openDX=True)
 
         """
-        filename = kwargs.get('filename', self.parameters['labeling_site_name'])
+        if filename is None:
+            filename = self.parameters['labeling_site_name']
         openDX = kwargs.get('openDX', None)
         if openDX is not None:
             mode = "dx" if openDX else ""
-        fn = os.path.join(write_dir, filename + '.'+mode)
+        fn = os.path.join(
+            write_dir,
+            filename + '.'+ mode
+        )
         mode_options = kwargs.get('mode_options', '')
 
         if mode == 'dx':
@@ -630,7 +670,10 @@ class AccessibleVolume(PythonBase):
         else:
             density_all /= density_all.sum()
 
-        grid_origin = av_all.originXYZ
+        grid_origin = np.array(
+            av_all.originXYZ,
+            dtype=np.float64
+        )
         dg = av_all.discStep
         points = av_functions.density2points(
             dg,
@@ -643,7 +686,12 @@ class AccessibleVolume(PythonBase):
         av_all.grid = list(density_all.flatten(order='F'))
         self._av_grid = av_all
 
-    def __init__(self, xyzr, attachment_coordinate, **kwargs):
+    def __init__(
+            self,
+            xyzr,
+            attachment_coordinate,
+            **kwargs
+    ):
         """
         Parameters
         ----------
@@ -663,7 +711,7 @@ class AccessibleVolume(PythonBase):
         linker_length : float
             The length of the linker connecting the dye moiety.
 
-        linker_ width : float
+        linker_width : float
             The width of the linker connecting the dye moiety.
 
         radius1 : float
@@ -794,26 +842,52 @@ class AVTrajectory(PythonBase):
 
     """
 
-    def __init__(self, traj, name, av_parameters, **kwargs):
+    def __init__(
+            self,
+            traj: mdtraj.Trajectory,
+            name: str,
+            av_parameters: Dict = None,
+            attachment_atom_selection: str = None,
+            **kwargs
+    ):
         """
         Parameters
         ----------
         name : str
 
         traj : mdtraj Trajectory object or str
-            Either a mdtraj Trajectory object or a string containing a the path to a trajectory file.
+            Either a mdtraj Trajectory object or a string containing a the path
+            to a trajectory file.
         top : str (optional)
-            The filename of a topology file. This options is only used if the traj parameter is an
-            string.
-        av_parameters : dict (mandatory)
-            A dictionary containing the parameters used to define an AV. The names of the parameters
-            are described in the JSON file format file.
+            The filename of a topology file. This options is only used if the
+            traj parameter is an string.
+        av_parameters : dict (optional)
+            A dictionary containing the parameters used to define an AV. The
+            names of the parameters are described in the JSON file format file.
+            If no parameters are provided the AV is initialized using the
+            following default parameters::
+                av_parameters = {
+                    'simulation_type': 'AV1',
+                    'linker_length': 20.0,
+                    'linker_width': 1.0,
+                    'radius1': 3.5,
+                    'simulation_grid_resolution': 0.5,
+                }
         cache_avs : bool (optional)
-            If cache_avs is True the AVs are stored in an dictionary where the keys of the
-            dictionary correspond to the frame numbers to prevent excessive recalculations.
-            If this parameter is False the AVs for a frame are recalculated and not stored.
+            If cache_avs is True the AVs are stored in an dictionary where the
+            keys of the dictionary correspond to the frame numbers to prevent
+            excessive recalculations. If this parameter is False the AVs for a
+            frame are recalculated and not stored.
+        attachment_atom_selection: str (optional)
+            This is a MDTraj selection string that is used to define the
+            attachment atom. If this selection string is not provided,
+            the attachment atom is determined using the parameters provided
+            in the av_parameters dictionary.
+
 
         """
+        if av_parameters is None:
+            av_parameters = dict()
         kwargs['name'] = name
         kwargs['verbose'] = kwargs.pop('verbose', False)
         av_parameters['labeling_site_name'] = name
@@ -827,22 +901,25 @@ class AVTrajectory(PythonBase):
             self.trajectory = mdtraj.load(traj, top=top) if isinstance(traj, str) else traj
         else:
             if not isinstance(traj, mdtraj.Trajectory):
-                raise TypeError('The passed trajectory parameter traj needs to be either a string '
-                                'pointing to a trajectory file or an mdtraj Trajectory object.')
+                raise TypeError(
+                    'The passed trajectory parameter traj needs to be either a string '
+                    'pointing to a trajectory file or an mdtraj Trajectory object.'
+                )
             self.trajectory = traj
 
         self._avs = dict()
         self.vdw = kwargs.get('vdw', av_functions.get_vdw(self.trajectory))
 
-        # Determine attachment atom index
-        selection = ""
-        selection += "chainid " + av_functions.LETTERS[
-            string.lower(
-                av_parameters['chain_identifier']
-            )
-        ]
-        selection += " and residue " + str(av_parameters['residue_seq_number'])
-        selection += " and name " + str(av_parameters['atom_name'])
+        if isinstance(attachment_atom_selection, str):
+            selection = attachment_atom_selection
+        else:
+            # Determine attachment atom index
+            selection = ""
+            selection += "chainid " + av_functions.LETTERS[
+                    av_parameters['chain_identifier'].lower()
+            ]
+            selection += " and residue " + str(av_parameters['residue_seq_number'])
+            selection += " and name " + str(av_parameters['atom_name'])
         self.attachment_atom_index = self.trajectory.topology.select(selection)[0]
 
         # Apply "strip_mask" and change vdw-radii of atoms selected by the strip mask
@@ -852,7 +929,9 @@ class AVTrajectory(PythonBase):
         if t == "MDTraj":
             strip_mask_atoms = self.trajectory.topology.select(sm)
         else:
-            raise AttributeError('Only MDTraj selections are allowed as strip mask')
+            raise AttributeError(
+                'Only MDTraj selections are allowed as strip mask'
+            )
         if len(strip_mask_atoms) == 0:
             raise KeyError("Warning: strip mask empty")
         self.vdw[strip_mask_atoms] *= 0.0
@@ -901,7 +980,9 @@ class AVTrajectory(PythonBase):
                         if selection_type == "MDTraj":
                             ai = topology.select(selection)
                         else:
-                            raise AttributeError('Only MDTraj selections are allowed as strip mask')
+                            raise AttributeError(
+                                'Only MDTraj selections are allowed as strip mask'
+                            )
                         if len(ai) > 0:
                             xyzi = xyz[ai]
                             ri = vdw[ai] + radius + inter_action_radius

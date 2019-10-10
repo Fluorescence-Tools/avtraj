@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import os
 import json
 from string import ascii_lowercase
@@ -15,7 +17,9 @@ package_directory = os.path.dirname(os.path.abspath(__file__))
 _periodic_table = json.load(open(os.path.join(package_directory, 'elements.json')))['Periodic Table']
 VDW_DICT = dict((key, _periodic_table[key]["vdW radius"]) for key in _periodic_table.keys())
 
-LETTERS = {letter: str(index) for index, letter in enumerate(ascii_lowercase, start=0)}
+LETTERS = {
+    letter: str(index) for index, letter in enumerate(ascii_lowercase, start=0)
+}
 
 
 PDB_KEYS = [
@@ -573,15 +577,27 @@ def random_distances(p1, p2, grid1=None, grid2=None,
     return distances
 
 
-@nb.jit
-def density2points(dg, density_3d, grid_origin):
+@nb.jit(nopython=True)
+def density2points(
+        dg: float,
+        density_3d: np.ndarray,
+        grid_origin: np.ndarray
+):
     nx, ny, nz = density_3d.shape
     n_max = nx * ny * nz
-    points = np.empty((n_max, 4), dtype=np.float64, order='C')
+    points = np.empty(
+        (n_max, 4), dtype=np.float64
+    )
 
-    gdx = np.arange(0, nx, dtype=np.float64) * dg
-    gdy = np.arange(0, ny, dtype=np.float64) * dg
-    gdz = np.arange(0, nz, dtype=np.float64) * dg
+    gdx = np.empty(nx, dtype=np.float64)
+    for i in range(0, nx):
+        gdx[i] = i * dg
+    gdy = np.empty(nx, dtype=np.float64)
+    for i in range(0, nx):
+        gdy[i] = i * dg
+    gdz = np.empty(nx, dtype=np.float64)
+    for i in range(0, nx):
+        gdz[i] = i * dg
 
     x0 = grid_origin[0]
     y0 = grid_origin[1]

@@ -17,8 +17,10 @@ setup(
     author="Thomas-Otavio Peulen",
     url="https://github.com/Fluorescence-Tools/avtraj",
     author_email="thomas.otavio.peulen@gmail.com",
-    description=("A library to calculate FRET observables for MD trajectories by accessible volume (AV) simulations."
-                 "In the AV simulations the sterically allowed conformation space of the labels is approximated "
+    description=("A library to calculate FRET observables for MD trajectories "
+                 "by accessible volume (AV) simulations."
+                 "In the AV simulations the sterically allowed conformation "
+                 "space of the labels is approximated "
                  "the conformational space of flexible attached ellipsoids."
                  ),
     long_description=long_description,
