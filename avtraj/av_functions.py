@@ -1,4 +1,5 @@
 from __future__ import annotations
+from typing import Dict, Tuple, List
 
 import os
 import json
@@ -9,13 +10,22 @@ import numba as nb
 from math import sqrt
 
 import LabelLib as ll
+import mdtraj as md
 
-DISTANCE_SAMPLES = 200000
+DISTANCE_SAMPLES = 100000
 DISTANCE_SAMPLING_METHOD = "random"
 
-package_directory = os.path.dirname(os.path.abspath(__file__))
-_periodic_table = json.load(open(os.path.join(package_directory, 'elements.json')))['Periodic Table']
-VDW_DICT = dict((key, _periodic_table[key]["vdW radius"]) for key in _periodic_table.keys())
+package_directory = os.path.dirname(
+    os.path.abspath(__file__)
+)
+_periodic_table = json.load(
+    open(
+        os.path.join(package_directory, 'elements.json')
+    )
+)['Periodic Table']
+VDW_DICT = dict(
+    (key, _periodic_table[key]["vdW radius"]) for key in _periodic_table.keys()
+)
 
 LETTERS = {
     letter: str(index) for index, letter in enumerate(ascii_lowercase, start=0)
@@ -39,7 +49,11 @@ PDB_FORMATS = [
 sobol_sequence = []#sobol_lib.i4_sobol_generate(6, DISTANCE_SAMPLES)
 
 
-def calculate_av(xyzr, attachment_coordinate, **kwargs):
+def calculate_av(
+        xyzr: np.ndarray,
+        attachment_coordinate: np.ndarray,
+        **kwargs
+):
     """Determines for a label defined by parameters defining the
     linker and the shape all grid points which can be reached by a linker.
 
@@ -48,20 +62,22 @@ def calculate_av(xyzr, attachment_coordinate, **kwargs):
     Parameters
     ----------
     xyzr : array
-        Numpy array containing the cartesian coordinates and radii of the obstacles.
+        Numpy array containing the cartesian coordinates and radii
+        of the obstacles.
 
     attachment_coordinate : array
         Numpy array of the cartesian coordinates of the attachment point
 
     parameters : dict
-        Python dictionary containing all parameters necessary for the calculation of an
-        accessible volume (details see documentation of JSON input file)
+        Python dictionary containing all parameters necessary for the
+        calculation of an accessible volume (details see documentation
+        of JSON input file)
 
     Returns
     -------
-        The points of the AV with positive density, a 3D grid filled with the AV densities,
-        and the attachment coordinates. All return values are numpy arrays. All coordinates
-        are cartesian coordinates.
+        The points of the AV with positive density, a 3D grid filled with the
+        AV densities, and the attachment coordinates. All return values are
+        numpy arrays. All coordinates are cartesian coordinates.
     """
 
     if kwargs['simulation_type'] == 'AV3':
@@ -90,7 +106,11 @@ def calculate_av(xyzr, attachment_coordinate, **kwargs):
     return av
 
 
-def calculate_min_linker_length(xyzr, attachment_coordinate, parameters):
+def calculate_min_linker_length(
+        xyzr: np.ndarray,
+        attachment_coordinate: np.ndarray,
+        parameters: Dict
+) -> np.ndarray:
     """ Calculates a 3D grid filled with the minimum linker length to
     reach a certain grid point. By default AV1 calculations using the first
     radius (radius1) are used.
@@ -118,10 +138,18 @@ def calculate_min_linker_length(xyzr, attachment_coordinate, parameters):
         dye_radius,
         disc_step
     )
-    return np.array(av.grid).reshape(av.shape, order='F')
+    return np.array(
+        av.grid
+    ).reshape(av.shape, order='F')
 
 
-def write(filename, atoms=None, append_model=False, append_coordinates=False, **kwargs):
+def write(
+        filename,
+        atoms=None,
+        append_model=False,
+        append_coordinates=False,
+        **kwargs
+):
     """ Writes a structured numpy array containing the PDB-info to a PDB-file
 
     If append_model and append_coordinates are False the file is overwritten. Otherwise the atomic-coordinates
@@ -140,8 +168,12 @@ def write(filename, atoms=None, append_model=False, append_coordinates=False, **
     fp = open(filename, mode)
 
     al = ["%-6s%5d %4s%1s%3s %1s%4d%1s   %8.3f%8.3f%8.3f%6.2f%6.2f          %2s%2s\n" %
-          ("ATOM ", at['atom_id'], at['atom_name'], " ", at['res_name'], at['chain'], at['res_id'], " ",
-           at['coord'][0], at['coord'][1], at['coord'][2], 0.0, at['bfactor'], at['element'], "  ")
+          (
+              "ATOM ", at['atom_id'], at['atom_name'], " ", at['res_name'],
+              at['chain'], at['res_id'], " ",
+              at['coord'][0], at['coord'][1], at['coord'][2],
+              0.0, at['bfactor'], at['element'], "  "
+          )
           for at in atoms
     ]
     if append_model:
@@ -152,7 +184,11 @@ def write(filename, atoms=None, append_model=False, append_coordinates=False, **
     fp.close()
 
 
-def write_xyz(filename, points, verbose=False):
+def write_xyz(
+        filename: str,
+        points: np.ndarray,
+        verbose: bool = False
+):
     """
     Writes the points as xyz-format file. The xyz-format file can be opened and displayed for instance
     in PyMol
@@ -174,9 +210,18 @@ def write_xyz(filename, points, verbose=False):
     fp.close()
 
 
-def write_points(filename, points, verbose=False, mode='xyz', density=None):
+def write_points(
+        filename: str,
+        points: np.ndarray,
+        verbose: bool = False,
+        mode: str = 'xyz',
+        density: List[float] = None
+):
     if mode == 'pdb':
-        atoms = np.empty(len(points), dtype={'names': PDB_KEYS, 'formats': PDB_FORMATS})
+        atoms = np.empty(
+            len(points),
+            dtype={'names': PDB_KEYS, 'formats': PDB_FORMATS}
+        )
         atoms['coord'] = points
         if density is not None:
             atoms['bfactor'] = density
@@ -185,7 +230,12 @@ def write_points(filename, points, verbose=False, mode='xyz', density=None):
         write_xyz(filename, points, verbose=verbose)
 
 
-def open_dx(density, ro, rn, dr):
+def open_dx(
+        density: np.ndarray,
+        ro: Tuple[float, float, float],
+        rn: Tuple[int, int, int],
+        dr: float
+):
     """ Returns a open_dx string compatible with PyMOL
 
     :param density: 3d-grid with values (densities)
@@ -220,7 +270,17 @@ def open_dx(density, ro, rn, dr):
     return s
 
 
-def write_open_dx(filename, density, r0, nx, ny, nz, dx, dy, dz):
+def write_open_dx(
+        filename: str,
+        density,
+        r0,
+        nx: int,
+        ny: int,
+        nz: int,
+        dx: float,
+        dy: float,
+        dz: float
+):
     """Writes a density into a dx-file
 
     :param filename: output filename
@@ -236,16 +296,26 @@ def write_open_dx(filename, density, r0, nx, ny, nz, dx, dy, dz):
         fp.write(s)
 
 
-def get_vdw(trajectory):
+def get_vdw(
+        trajectory: md.Trajectory
+):
     """Get a vector of the vdw-radii
     :param trajectory: mdtraj
     :return:
     """
-    return np.array([_periodic_table[atom.element.symbol]['vdW radius'] for atom in trajectory.topology.atoms],
-                    dtype=np.float64)
+    vdw = np.array(
+        [_periodic_table[atom.element.symbol]['vdW radius']
+         for atom in trajectory.topology.atoms],
+        dtype=np.float64
+    )
+    return vdw
 
 
-def histogram_rda(av1, av2, **kwargs):
+def histogram_rda(
+        av1,
+        av2,
+        **kwargs
+):
     """Calculates the distance distribution with respect to a second accessible volume and returns the
     distance axis and the probability of the respective distance. By default the distance-axis "mfm.rda_axis"
     is taken to generate the histogram.
@@ -290,49 +360,11 @@ def histogram_rda(av1, av2, **kwargs):
     return p, rda_axis
 
 
-def average_distance(av1, av2, **kwargs):
-    """Calculate the mean distance between two array of points
-
-    Parameters
-    ----------
-    points_1 : array
-        An array of points containing the cartesian coordinates of the points and the weight of each
-        point [x, y, z, weight].
-
-    points_2 : array
-        An array of points containing the cartesian coordinates of the points and the weight of each
-        point [x, y, z, weight].
-
-    distance_samples : int
-        The number of randomly picked distances for the calculation of the average distance between
-        the two arrays of points
-
-    use_weights : bool
-        If use_weights is True the weights of the points are considered in the caclualtion of the
-        average distance between the points.
-
-
-    Returns
-    -------
-    float
-        The distance between the two set of points
-
-    """
-    kwargs['grid1'] = av1.grid_density
-    kwargs['grid2'] = av2.grid_density
-    kwargs['dg_1'] = av1.parameters['simulation_grid_resolution']
-    kwargs['dg_2'] = av2.parameters['simulation_grid_resolution']
-    kwargs['grid_origin_1'] = av1.attachment_coordinate
-    kwargs['grid_origin_2'] = av2.attachment_coordinate
-    d = random_distances(av1.points, av2.points, **kwargs)
-
-    if kwargs.get('use_weights', True):
-        return np.dot(d[:, 0], d[:, 1]) / d[:, 1].sum()
-    else:
-        return np.mean(d[:, 0])
-
-
-def average_distance_labellib(av1, av2, **kwargs):
+def average_distance_labellib(
+        av1,
+        av2,
+        **kwargs
+):
     """Calculate the mean distance between two array of points
 
     Parameters
@@ -361,10 +393,18 @@ def average_distance_labellib(av1, av2, **kwargs):
 
     """
     distance_samples = kwargs.get('distance_samples', DISTANCE_SAMPLES)
-    return ll.meanDistance(av1._av_grid, av2._av_grid, distance_samples)
+    return ll.meanDistance(
+        av1._av_grid,
+        av2._av_grid,
+        distance_samples
+    )
 
 
-def widthRDA(av1, av2, **kwargs):
+def widthRDA(
+        av1,
+        av2,
+        **kwargs
+):
     """Calculate the width of the distance distribution between two accessible volumes
 
     >>> pdb_filename = '/examples/T4L_Topology.pdb'
@@ -382,51 +422,12 @@ def widthRDA(av1, av2, **kwargs):
     return np.sqrt(v)
 
 
-def mean_fret_efficiency(av1, av2, forster_radius=52.0, **kwargs):
-    """Calculate the FRET-averaged (PDA/Intensity) distance between two accessible volumes
-
-    Parameters
-    ----------
-
-    points_1 : array
-        An array of points containing the cartesian coordinates of the points and the weight of each
-        point [x, y, z, weight].
-
-    points_2 : array
-        An array of points containing the cartesian coordinates of the points and the weight of each
-        point [x, y, z, weight].
-
-
-    Returns
-    -------
-    float
-        The mean FRET efficiency for the two sets of points
-
-    Examples
-    --------
-    >>> pdb_filename = '/examples/T4L_Topology.pdb'
-    >>> structure = mfm.Structure(pdb_filename)
-    >>> av1 = mfm.fps.AV(structure, residue_seq_number=72, atom_name='CB')
-    >>> av2 = mfm.fps.AV(structure, residue_seq_number=134, atom_name='CB')
-    >>> mfm.fps.RDAMeanE(av1, av2)
-    52.602731299544686
-    """
-    kwargs['grid1'] = av1.grid_density
-    kwargs['grid2'] = av2.grid_density
-    kwargs['dg_1'] = av1.parameters['simulation_grid_resolution']
-    kwargs['dg_2'] = av2.parameters['simulation_grid_resolution']
-    kwargs['grid_origin_1'] = av1.attachment_coordinate
-    kwargs['grid_origin_2'] = av2.attachment_coordinate
-
-    d = random_distances(av1.points, av2.points, **kwargs)
-    r = d[:, 0]
-    w = d[:, 1]
-    e = (1. / (1. + (r / forster_radius) ** 6.0))
-    mean_fret = np.dot(w, e) / w.sum()
-    return mean_fret
-
-
-def mean_fret_efficiency_label_lib(av1, av2, forster_radius=52.0, **kwargs):
+def mean_fret_efficiency_label_lib(
+        av1,
+        av2,
+        forster_radius=52.0,
+        **kwargs
+):
     """Calculate the FRET-averaged (PDA/Intensity) distance between two accessible volumes
 
     Parameters
@@ -456,10 +457,18 @@ def mean_fret_efficiency_label_lib(av1, av2, forster_radius=52.0, **kwargs):
     52.602731299544686
     """
     distance_samples = kwargs.get('distance_samples', DISTANCE_SAMPLES)
-    return ll.meanEfficiency(av1._av_grid, av2._av_grid, forster_radius, distance_samples)
+    return ll.meanEfficiency(
+        av1._av_grid,
+        av2._av_grid,
+        forster_radius,
+        distance_samples
+    )
 
 
-def dRmp(av1, av2):
+def dRmp(
+        av1,
+        av2
+):
     """Calculate the distance between the mean position of two accessible volumes
 
     >>> import mfm
@@ -473,11 +482,13 @@ def dRmp(av1, av2):
     return np.sqrt(((av1.Rmp-av2.Rmp)**2).sum())
 
 
-@nb.jit
-def random_distances(p1, p2, grid1=None, grid2=None,
-                     dg_1=1.0, dg_2=1.0, grid_origin_1=None,
-                     grid_origin_2=None, distance_samples=None,
-                     distance_sampling_method=None):
+@nb.jit(nopython=True)
+def random_distances(
+        p1, p2, grid1=None, grid2=None,
+        dg_1=1.0, dg_2=1.0, grid_origin_1=None,
+        grid_origin_2=None, distance_samples=None,
+        distance_sampling_method=None
+):
     """Calculates random cartesian distances between two set of points where every
     point has a weight
 
@@ -577,43 +588,8 @@ def random_distances(p1, p2, grid1=None, grid2=None,
     return distances
 
 
-@nb.jit(nopython=True)
-def density2points(
-        dg: float,
-        density_3d: np.ndarray,
-        grid_origin: np.ndarray
+def density2points_labellib(
+        av
 ):
-    nx, ny, nz = density_3d.shape
-    n_max = nx * ny * nz
-    points = np.empty(
-        (n_max, 4), dtype=np.float64
-    )
-
-    gdx = np.empty(nx, dtype=np.float64)
-    for i in range(0, nx):
-        gdx[i] = i * dg
-    gdy = np.empty(nx, dtype=np.float64)
-    for i in range(0, nx):
-        gdy[i] = i * dg
-    gdz = np.empty(nx, dtype=np.float64)
-    for i in range(0, nx):
-        gdz[i] = i * dg
-
-    x0 = grid_origin[0]
-    y0 = grid_origin[1]
-    z0 = grid_origin[2]
-
-    n = 0
-    for ix in range(nx):
-        for iy in range(ny):
-            for iz in range(nz):
-                d = density_3d[ix, iy, iz]
-                if d > 0:
-                    points[n, 0] = gdx[ix] + x0
-                    points[n, 1] = gdy[iy] + y0
-                    points[n, 2] = gdz[iz] + z0
-                    points[n, 3] = d
-                    n += 1
-    return points[:n]
-
+    return av.points()
 

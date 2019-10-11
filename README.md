@@ -1,6 +1,6 @@
-
-AvTraj
-======
+# AvTraj
+[![Build Status](https://travis-ci.org/Fluorescence-Tools/avtraj.svg?branch=master)](https://travis-ci.org/Fluorescence-Tools/avtraj)
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/146004a9bd4a4c19b2fd55b8c3d10182)](https://www.codacy.com/manual/tpeulen/avtraj?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=Fluorescence-Tools/avtraj&amp;utm_campaign=Badge_Grade)
 [![Anaconda-Server Badge](https://anaconda.org/tpeulen/avtraj/badges/installer/conda.svg)](https://conda.anaconda.org/tpeulen)
 [![Anaconda-Server Badge](https://anaconda.org/tpeulen/avtraj/badges/platforms.svg)](https://anaconda.org/tpeulen/avtraj)
 
@@ -26,13 +26,10 @@ Features include:
 AVTraj includes a command-line application, avana, for screening and
  analyzing structural models.
 
-
-Relation of other software and libraries
-----------------------------------------
-
+## Relation of other software and libraries
 LabelLib serves as core low-level library for the software Olga and the
- higher-level Python library AvTraj. The
-deprecated software FPS is independent of LabelLib.
+higher-level Python library AvTraj. The deprecated software FPS is
+independent of LabelLib.
 
 ![LabelLib and other software/libraries][3]
 
@@ -55,88 +52,89 @@ accessible volumes (AVs), screen a set of structural models against
 experimental observables, and can generate new structural 
 models by rigid-body docking using experimental FRET data.
 
-
-Installation
-============
-
-Anaconda
---------
+## Installation
+### Anaconda
 
 ```commandline
 conda --add channels tpeulen
 conda install avtraj
 ```
 
-
-Code Example
-============
-
+## Code Example
 ```python
-import mdtraj as md
-import avtraj as avt
-
-# First load an MD trajectory by mdtraj
-xtc_filename = './test/data/xtc/1am7_corrected.xtc'
-topology_filename = './test/data/xtc/1am7_protein.pdb'
-traj = md.load(
-    xtc_filename,
-    top=topology_filename
-)
-# Define your accessible volume (AV) parameters
-av_parameters_donor = {
-    'simulation_type': 'AV1',
-    'linker_length': 20.0,
-    'linker_width': 1.0,
-    'radius1': 3.5,
-    'simulation_grid_resolution': 0.5,
-}
-
-# Pass a trajectory to fps.AVTrajectory. This creates an object, which can be 
-# accessed as a list. The objects within the "list" are accessible volumes  
-av_traj_donor = avt.AVTrajectory(
-    traj,
-    av_parameters=av_parameters_donor,
-    name='57',
-    attachment_atom_selection='resSeq 57 and name CB'
-)
-# These accessible volumes can be saved as xyz-file
-av_traj_donor[0].save_av('57')
-
-av_parameters_acceptor = {
-    'simulation_type': 'AV1',
-    'linker_length': 20.0,
-    'linker_width': 1.0,
-    'radius1': 3.5,
-    'simulation_grid_resolution': 0.5,
-}
-
-# The dye parameters can either be passed explicitly on creation of the object
-av_traj_acceptor = avt.AVTrajectory(
-    traj, 
-    av_parameters=av_parameters_acceptor,
-    name='136',
-    attachment_atom_selection='resSeq 136 and name CB'
-)
-
-# To calculate a trajectory of distances and distance distributions first a 
-# labeling file and a "distance file" needs to be specified. The distance
-# file contains a set of labeling positions and distances and should be
-# compatible to the labeling files used by the software "Olga". By default the 
-av_dist = avt.AvDistanceTrajectory(traj, './examples/hGBP1_distance.json')
-
+    import mdtraj as md
+    import avtraj as avt
+    import json
+    
+    # First load an MD trajectory by mdtraj
+    xtc_filename = './test/data/xtc/1am7_corrected.xtc'
+    topology_filename = './test/data/xtc/1am7_protein.pdb'
+    traj = md.load(
+        xtc_filename,
+        top=topology_filename
+    )
+    # Define your accessible volume (AV) parameters
+    av_parameters_donor = {
+        'simulation_type': 'AV1',
+        'linker_length': 20.0,
+        'linker_width': 1.0,
+        'radius1': 3.5,
+        'simulation_grid_resolution': 1.0,
+        'residue_seq_number': 57,
+        'atom_name': 'CA'
+    }
+    
+    # Pass a trajectory to fps.AVTrajectory. This creates an object, which can be
+    # accessed as a list. The objects within the "list" are accessible volumes
+    av_traj_donor = avt.AVTrajectory(
+        traj,
+        av_parameters=av_parameters_donor,
+        name='57'
+    )
+    # These accessible volumes can be saved as xyz-file
+    av_traj_donor[0].save_av()
+    
+    av_parameters_acceptor = {
+        'simulation_type': 'AV1',
+        'linker_length': 20.0,
+        'linker_width': 1.0,
+        'radius1': 3.5,
+        'simulation_grid_resolution': 1.0,
+        'residue_seq_number': 136,
+        'atom_name': 'CA'
+    }
+    
+    # The dye parameters can either be passed explicitly on creation of the object
+    av_traj_acceptor = avt.AVTrajectory(
+        traj,
+        av_parameters=av_parameters_acceptor,
+        name='136'
+    )
+    av_traj_acceptor[0].save_av()
+    
+    
+    # To calculate a trajectory of distances and distance distributions first a
+    # labeling file and a "distance file" needs to be specified. The distance
+    # file contains a set of labeling positions and distances and should be
+    # compatible to the labeling files used by the software "Olga".
+    # or by the tool `label_structure` provided by the software ChiSurf.
+    labeling_file = './test/data/labeling.fps.json'
+    av_dist = avt.AvDistanceTrajectory(
+        traj,
+        json.load(
+            open(
+                labeling_file
+            )
+        )
+    )
+    print(av_dist[:10])
 ```
 
-
-Citations 
-=========
-
+## Citations 
 * MDTraj - [![DOI for Citing MDTraj](https://img.shields.io/badge/DOI-10.1016%2Fj.bpj.2015.08.015-blue.svg)](http://doi.org/10.1016/j.bpj.2015.08.015)
 * FPS - [![DOI for Citing FPS](https://img.shields.io/badge/DOI-10.1038/nmeth.2222-blue.svg)](http://doi.org/10.1038/nmeth.2222)
 
-
-License
-=======
-
+## License
 GNU LGPL version 2.1, or at your option a later version of the license.
 Various sub-portions of this library may be independently distributed under
 different licenses. See those files for their specific terms.

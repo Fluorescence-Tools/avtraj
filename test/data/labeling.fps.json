@@ -1,0 +1,51 @@
+{
+    "Distances": {
+        "158_57": {
+            "Forster_radius": 52.0,
+            "distance": 50.0,
+            "distance_type": "RDAMean",
+            "error_neg": 5.0,
+            "error_pos": 5.0,
+            "position1_name": "57",
+            "position2_name": "158"
+        },
+        "57_136": {
+            "Forster_radius": 52.0,
+            "distance": 50.0,
+            "distance_type": "RDAMean",
+            "error_neg": 5.0,
+            "error_pos": 5.0,
+            "position1_name": "57",
+            "position2_name": "136"
+        }
+    },
+    "Positions": {
+        "136": {
+            "atom_name": "CA",
+            "linker_length": 20.0,
+            "linker_width": 1.5,
+            "radius1": 3.5,
+            "residue_seq_number": 136,
+            "simulation_grid_resolution": 1.0,
+            "simulation_type": "AV1"
+        },
+        "158": {
+            "atom_name": "CA",
+            "linker_length": 20.0,
+            "linker_width": 1.5,
+            "radius1": 3.5,
+            "residue_seq_number": 158,
+            "simulation_grid_resolution": 1.0,
+            "simulation_type": "AV1"
+        },
+        "57": {
+            "atom_name": "CA",
+            "linker_length": 20.0,
+            "linker_width": 1.5,
+            "radius1": 3.5,
+            "residue_seq_number": 57,
+            "simulation_grid_resolution": 1.0,
+            "simulation_type": "AV1"
+        }
+    }
+}
