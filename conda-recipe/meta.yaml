@@ -1,0 +1,63 @@
+
+package:
+  name: avtraj
+  version: {{ GIT_DESCRIBE_TAG }}
+
+source:
+  git_url: ..
+
+build:
+    number: {{ GIT_DESCRIBE_NUMBER|int }}
+    string: np{{ CONDA_NPY }}py{{ CONDA_PY }}_{{ GIT_BUILD_STR }}
+
+requirements:
+  host:
+    - python {{ python }}
+    - setuptools
+  run:
+    - python {{ python }}
+    - mdtraj
+    - labellib
+    - numba
+    - numpy
+    - pyyaml
+
+test:
+  imports:
+    - mdtraj
+    - numba
+    - LabelLib
+    - numpy
+
+about:
+  home: https://github.com/Fluorescence-Tools/avtraj
+  license: LGPL2.1
+  summary: MD-trajectory processing librabry for FRET experiments using LabelLib and MDTraj
+  description: >
+      AvTraj is tool to calculate FRET observables from MD-trajectories. Read,
+      write and analyze accessible volumes (AVs) using MD trajectories as an input with only a few lines of 
+      Python code. By the use of LabelLib AvTraj provides programmatic access to latest developments 
+      in implicit dye models for FRET experiments.
+      
+      AvTraj is a python library that allows users to perform simulations of accessible volumes for 
+      molecular dynamics (MD) trajectories. AvTraj serves as a high-level interface for the development 
+      of new methodologies for structure-based fluorescence spectroscopy.
+      Details are provided in the publications
+
+      1.  Kalinin, S., T. Peulen, S. Sindbert, P. J. Rothwell, S. Berger, T. Restle, R. S. Goody,
+          H. Gohlke and C. A. M. Seidel (2012). A toolkit and benchmark study for FRET-restrained
+          high-precision structural modeling. Nature Methods 9(12) 1218-U1129.
+
+      2.  Dimura, M., T. O. Peulen, C. A. Hanke, A. Prakash, H. Gohlke and C. A. M. Seidel (2016).
+          Quantitative FRET studies and integrative modeling unravel the structure and dynamics
+          of biomolecular systems." Current Opinion in Structural Biology 40 163-185.
+
+      3.  Sindbert, S., S. Kalinin, N. Hien, A. Kienzler, L. Clima, W. Bannwarth, B. Appel,
+          S. Muller and C. A. M. Seidel (2011). Accurate Distance Determination of Nucleic Acids
+          via Forster Resonance Energy Transfer - Implications of Dye Linker Length and Rigidity.
+          Journal of the American Chemical Society 133(8) 2463-2480.
+            
+extra:
+  recipe-maintainers:
+    - tpeulen
+
