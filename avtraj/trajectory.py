@@ -19,9 +19,7 @@ class AVTrajectory(PythonBase):
 
     Attributes
     ----------
-
     trajectory : mdtraj trajectory
-
     position_name : position name
 
 
@@ -36,7 +34,6 @@ class AVTrajectory(PythonBase):
     >>> import mdtraj as md
     >>> import avtraj as avt
     >>> traj = md.load('./doc/examples/traj.h5')
-
     >>> av_parameters = dict()
     >>> av_parameters['chain_identifier'] = 'A'
     >>> av_parameters['residue_seq_number'] = 344
@@ -74,7 +71,6 @@ class AVTrajectory(PythonBase):
         Parameters
         ----------
         name : str
-
         traj : mdtraj Trajectory object or str
             Either a mdtraj Trajectory object or a string containing a the path
             to a trajectory file.
@@ -98,7 +94,6 @@ class AVTrajectory(PythonBase):
             attachment atom. If this selection string is not provided,
             the attachment atom is determined using the parameters provided
             in the av_parameters dictionary.
-
         """
         kwargs['name'] = name
         kwargs['verbose'] = kwargs.pop('verbose', False)
@@ -198,7 +193,6 @@ class AVTrajectory(PythonBase):
         except KeyError:
             xyzrq_array = []
         parameters['interaction_sites_xyzrq'] = xyzrq_array
-
         attachment_coordinate = xyz[self.attachment_atom_index]
         av = AccessibleVolume(
             xyzr,
@@ -227,9 +221,7 @@ class AVTrajectory(PythonBase):
             return re
 
 
-class AvDistanceTrajectory(
-    PythonBase
-):
+class AvDistanceTrajectory(PythonBase):
     """
     The AvPotential class provides the possibility to calculate the reduced
     or unreduced chi2 given a set of labeling positions and experimental

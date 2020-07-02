@@ -46,8 +46,6 @@ PDB_FORMATS = [
     'f8', 'f8', 'f8', 'f8'
 ]
 
-sobol_sequence = []#sobol_lib.i4_sobol_generate(6, DISTANCE_SAMPLES)
-
 
 def calculate_av(
         xyzr: np.ndarray,
