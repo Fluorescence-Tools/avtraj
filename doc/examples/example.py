@@ -42,4 +42,4 @@ av_dist = avtraj.AvDistanceTrajectory(traj, './examples/hGBP1_distance.json')
 # a distance 'rDAE', the distance between the mean dye positions 'rMP', and the donor-acceptor distance
 # distribution 'pRDA' is calculated. 'pRDA' is a histogram. The histogram bins can be specified upon initialization
 # of the AvDistanceTrajectory object and are returned as a value.
-print av_dist[0]
+print(av_dist[0])

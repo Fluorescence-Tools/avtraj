@@ -4,7 +4,6 @@ import utils
 import os
 import unittest
 
-
 TOPDIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 utils.set_search_paths(TOPDIR)
 
@@ -13,16 +12,16 @@ import mdtraj as md
 import avtraj
 import numpy as np
 
+xtc_filename = './data/xtc/1am7_corrected.xtc'
+topology_filename = './data/xtc/1am7_protein.pdb'
+traj = md.load(
+    xtc_filename,
+    top=topology_filename
+)
+n_frames = len(traj)
+
 
 class Tests(unittest.TestCase):
-
-    xtc_filename = './data/xtc/1am7_corrected.xtc'
-    topology_filename = './data/xtc/1am7_protein.pdb'
-    traj = md.load(
-        xtc_filename,
-        top=topology_filename
-    )
-    n_frames = len(traj)
 
     def test_av_traj_init_calc(self):
         av_parameters = {
@@ -35,7 +34,7 @@ class Tests(unittest.TestCase):
             'atom_name': 'CA'
         }
         av_traj = avtraj.trajectory.AVTrajectory(
-            self.traj,
+            traj,
             av_parameters=av_parameters,
             name='57'
         )
@@ -59,7 +58,7 @@ class Tests(unittest.TestCase):
             'atom_name': 'CA'
         }
         av_traj = avtraj.trajectory.AVTrajectory(
-            self.traj,
+            traj,
             name='57',
             av_parameters=av_parameters
         )
@@ -85,7 +84,7 @@ class Tests(unittest.TestCase):
             'atom_name': 'CA'
         }
         av_traj_donor = avtraj.trajectory.AVTrajectory(
-            self.traj,
+            traj,
             av_parameters=av_parameters_donor,
             name='57',
         )
@@ -101,14 +100,14 @@ class Tests(unittest.TestCase):
         }
 
         av_traj_acceptor = avtraj.trajectory.AVTrajectory(
-            self.traj,
+            traj,
             av_parameters=av_parameters_acceptor,
             name='136'
         )
 
         distances = []
         distances_fret = []
-        for i in range(self.n_frames):
+        for i in range(n_frames):
             av_d = av_traj_donor[i]
             av_a = av_traj_acceptor[i]
             distances.append(
@@ -119,23 +118,25 @@ class Tests(unittest.TestCase):
             )
 
         distances_ref = np.array(
-            [46.58445179, 46.10678172, 46.64247226, 46.97069943, 47.7507035,
-             45.31224551,
-             44.55804641, 45.59746112, 44.4557364,  45.01399551, 45.40064313,
-             45.90336265,
-             46.12118593, 44.55974777, 46.4193657,  44.15305281, 45.92528762,
-             47.52961313,
-             47.49590247, 43.94771434, 49.33894502, 47.72217377, 47.80850216,
-             48.37280611,
-             47.59650977, 48.98418512, 49.41689837, 51.25695952, 50.29100387,
-             50.37597367,
-             49.90922226, 49.45598574, 48.19644809, 49.9073324,  50.00831528,
-             49.72726928,
-             49.52950194, 48.86970621, 49.33807575, 47.00636766, 49.9563316,
-             51.46870868,
-             48.05152249, 49.60495012, 48.17830894, 48.3569286,  49.35266764,
-             47.42559334,
-             49.46402385, 48.52772225, 49.79250257]
+            [
+                46.58445179, 46.10678172, 46.64247226, 46.97069943, 47.7507035,
+                45.31224551,
+                44.55804641, 45.59746112, 44.4557364, 45.01399551, 45.40064313,
+                45.90336265,
+                46.12118593, 44.55974777, 46.4193657, 44.15305281, 45.92528762,
+                47.52961313,
+                47.49590247, 43.94771434, 49.33894502, 47.72217377, 47.80850216,
+                48.37280611,
+                47.59650977, 48.98418512, 49.41689837, 51.25695952, 50.29100387,
+                50.37597367,
+                49.90922226, 49.45598574, 48.19644809, 49.9073324, 50.00831528,
+                49.72726928,
+                49.52950194, 48.86970621, 49.33807575, 47.00636766, 49.9563316,
+                51.46870868,
+                48.05152249, 49.60495012, 48.17830894, 48.3569286, 49.35266764,
+                47.42559334,
+                49.46402385, 48.52772225, 49.79250257
+            ]
         )
         self.assertEqual(
             np.allclose(
@@ -149,12 +150,7 @@ class Tests(unittest.TestCase):
     def test_labeling_file(self):
         labeling_file = './data/labeling.fps.json'
         av_dist = avtraj.trajectory.AvDistanceTrajectory(
-            self.traj,
-            json.load(
-                open(
-                    labeling_file
-                )
-            )
+            traj, json.load(open(labeling_file))
         )
         d_ref = {
             '158_57': {
