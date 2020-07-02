@@ -14,15 +14,17 @@ import avtraj
 import numpy as np
 
 
+xtc_filename = './data/xtc/1am7_corrected.xtc'
+topology_filename = './data/xtc/1am7_protein.pdb'
+traj = md.load(
+    xtc_filename,
+    top=topology_filename
+)
+n_frames = len(traj)
+
+
 class Tests(unittest.TestCase):
 
-    xtc_filename = './data/xtc/1am7_corrected.xtc'
-    topology_filename = './data/xtc/1am7_protein.pdb'
-    traj = md.load(
-        xtc_filename,
-        top=topology_filename
-    )
-    n_frames = len(traj)
 
     def test_av_traj_init_calc(self):
         av_parameters = {
@@ -35,7 +37,7 @@ class Tests(unittest.TestCase):
             'atom_name': 'CA'
         }
         av_traj = avtraj.trajectory.AVTrajectory(
-            self.traj,
+            traj,
             av_parameters=av_parameters,
             name='57'
         )
@@ -59,7 +61,7 @@ class Tests(unittest.TestCase):
             'atom_name': 'CA'
         }
         av_traj = avtraj.trajectory.AVTrajectory(
-            self.traj,
+            traj,
             name='57',
             av_parameters=av_parameters
         )
@@ -85,7 +87,7 @@ class Tests(unittest.TestCase):
             'atom_name': 'CA'
         }
         av_traj_donor = avtraj.trajectory.AVTrajectory(
-            self.traj,
+            traj,
             av_parameters=av_parameters_donor,
             name='57',
         )
@@ -101,14 +103,14 @@ class Tests(unittest.TestCase):
         }
 
         av_traj_acceptor = avtraj.trajectory.AVTrajectory(
-            self.traj,
+            traj,
             av_parameters=av_parameters_acceptor,
             name='136'
         )
 
         distances = []
         distances_fret = []
-        for i in range(self.n_frames):
+        for i in range(n_frames):
             av_d = av_traj_donor[i]
             av_a = av_traj_acceptor[i]
             distances.append(
@@ -149,11 +151,9 @@ class Tests(unittest.TestCase):
     def test_labeling_file(self):
         labeling_file = './data/labeling.fps.json'
         av_dist = avtraj.trajectory.AvDistanceTrajectory(
-            self.traj,
+            traj,
             json.load(
-                open(
-                    labeling_file
-                )
+                open(labeling_file)
             )
         )
         d_ref = {

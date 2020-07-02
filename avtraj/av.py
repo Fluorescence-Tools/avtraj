@@ -243,7 +243,6 @@ class AccessibleVolume(
         25.816984253459424
         >>> av_1.dRDA(av_2, distance_sampling_method="sobol_sequence", distance_samples=100)
         """
-        #return av_functions.average_distance(self, av, **kwargs)
         return av_functions.average_distance_labellib(self, av, **kwargs)
 
     def mean_fret_efficiency(
@@ -271,7 +270,6 @@ class AccessibleVolume(
         >>> av_1.mean_fret_efficiency(av_2)
         0.9421520823306685
         """
-        #return av_functions.mean_fret_efficiency(self, av, forster_radius, **kwargs)
         return av_functions.mean_fret_efficiency_label_lib(self, av, forster_radius, **kwargs)
 
     def dRDAE(
@@ -625,13 +623,6 @@ class AccessibleVolume(
         sd = (xyzr.T - x0)**2
         d2 = sd[:, 0] + sd[:, 1] + sd[:, 2]
         xyzr.T[np.where(d2 < asr ** 2)[0]] *= np.array([1.0, 1.0, 1.0, 0.0])
-
-        # calculate an interaction array if no array was provided
-        #if self._xyzrq is None:
-        #    xyzc = np.copy(self.xyzr)
-        #    xyzc[3] += self.contact_volume_thickness
-        #    w = np.ones(xyzc.shape[1], dtype=np.float64)
-        #    self._xyzrq = np.vstack([xyzc, w])
 
         self.attachment_coordinate = attachment_coordinate
         self._min_linker_length = None
