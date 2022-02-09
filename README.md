@@ -55,6 +55,16 @@ models by rigid-body docking using experimental FRET data.
 ## Installation
 ### Anaconda
 
+The software depends on other libraries provided by conda-forge. Thus, as
+a first step, the [conda-forge](https://conda-forge.org/)
+channel needs to be added.
+
+```commandline
+conda --add channels conda-forge
+```
+
+In a second step, the avtraj package can be installed.
+
 ```commandline
 conda --add channels tpeulen
 conda install avtraj
