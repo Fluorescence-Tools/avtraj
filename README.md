@@ -1,6 +1,5 @@
 # AvTraj
 [![Build Status](https://travis-ci.org/Fluorescence-Tools/avtraj.svg?branch=master)](https://travis-ci.org/Fluorescence-Tools/avtraj)
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/146004a9bd4a4c19b2fd55b8c3d10182)](https://www.codacy.com/manual/tpeulen/avtraj?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=Fluorescence-Tools/avtraj&amp;utm_campaign=Badge_Grade)
 [![Anaconda-Server Badge](https://anaconda.org/tpeulen/avtraj/badges/installer/conda.svg)](https://conda.anaconda.org/tpeulen)
 [![Anaconda-Server Badge](https://anaconda.org/tpeulen/avtraj/badges/platforms.svg)](https://anaconda.org/tpeulen/avtraj)
 
